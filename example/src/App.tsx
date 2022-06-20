@@ -6,7 +6,7 @@ import { StudyCameraView } from 'react-native-study-camera';
 export default function App() {
   return (
     <View style={styles.container}>
-      <StudyCameraViewManager color="#32a852" style={styles.box} />
+      <StudyCameraView color="#32a852" style={styles.box} />
     </View>
   );
 }

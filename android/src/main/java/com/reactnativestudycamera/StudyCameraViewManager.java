@@ -2,30 +2,31 @@ package com.reactnativestudycamera;
 
 import android.graphics.Color;
 import android.view.View;
+import android.widget.FrameLayout;
 
-import androidx.annotation.NonNull;
-
-import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
+import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
 
-public class StudyCameraViewManager extends SimpleViewManager<View> {
-    public static final String REACT_CLASS = "StudyCameraView";
+import javax.annotation.Nonnull;
 
-    @Override
-    @NonNull
-    public String getName() {
-        return REACT_CLASS;
-    }
+public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> {
+  public static final String REACT_CLASS = "StudyCameraView";
 
-    @Override
-    @NonNull
-    public View createViewInstance(ThemedReactContext reactContext) {
-        return new View(reactContext);
-    }
+  @Override
+  @Nonnull
+  public String getName() {
+    return REACT_CLASS;
+  }
 
-    @ReactProp(name = "color")
-    public void setColor(View view, String color) {
-        view.setBackgroundColor(Color.parseColor(color));
-    }
+  @Override
+  @Nonnull
+  public CameraPreviewView createViewInstance(ThemedReactContext reactContext) {
+    return new CameraPreviewView(reactContext);
+  }
+
+  @ReactProp(name = "color")
+  public void setColor(View view, String color) {
+    view.setBackgroundColor(Color.parseColor(color));
+  }
 }
