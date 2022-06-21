@@ -7,7 +7,13 @@ The package to open Camera for Belle Study application
 ```sh
 npm install react-native-study-camera
 ```
-
+Or in package.json
+```js
+"devDependencies": {
+	...
+	"react-native-study-camera": "git+https://github.com/tyn17/react-native-study-camera.git"
+}
+```
 ## Usage
 
 ```js
