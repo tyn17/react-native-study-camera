@@ -1,3 +1,4 @@
+import React, { Component } from 'react';
 import {
   requireNativeComponent,
   UIManager,
@@ -25,3 +26,12 @@ export const StudyCameraView =
     : () => {
         throw new Error(LINKING_ERROR);
       };
+// CameraView Wrapper Component
+export class CameraView extends Component<StudyCameraProps> {
+  render() {
+    return <StudyCameraView {...this.props} />;
+  }
+
+  componentDidMount() {}
+  componentWillUnmount() {}
+}
