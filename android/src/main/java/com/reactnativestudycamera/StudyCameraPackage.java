@@ -11,9 +11,15 @@ import java.util.Collections;
 import java.util.List;
 
 public class StudyCameraPackage implements ReactPackage {
+  private StudyCameraViewManager cameraViewManager;
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
-        return Collections.emptyList();
+      if (cameraViewManager == null) {
+        cameraViewManager = new StudyCameraViewManager();
+      }
+      return Arrays.<NativeModule>asList(
+        new StudyCameraModule(reactContext, cameraViewManager)
+      );
     }
   public List<Class<? extends JavaScriptModule>> createJSModules() {
     return Collections.emptyList();
@@ -21,6 +27,9 @@ public class StudyCameraPackage implements ReactPackage {
 
   @Override
     public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
-        return Arrays.<ViewManager>asList(new StudyCameraViewManager());
+      if (cameraViewManager == null) {
+        cameraViewManager = new StudyCameraViewManager();
+      }
+      return Arrays.<ViewManager>asList(cameraViewManager);
     }
 }

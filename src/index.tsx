@@ -4,6 +4,8 @@ import {
   UIManager,
   Platform,
   ViewStyle,
+  NativeModules,
+  NativeSyntheticEvent,
 } from 'react-native';
 
 const LINKING_ERROR =
@@ -15,12 +17,13 @@ const LINKING_ERROR =
 type StudyCameraProps = {
   bodyPart: number;
   style: ViewStyle;
-  onCaptured: (event: Event) => void;
+  onCaptured: (event: NativeSyntheticEvent<String>) => void;
 };
 
 const ComponentName = 'StudyCameraView';
+const { StudyCameraModule } = NativeModules;
 
-export const StudyCameraView =
+const StudyCameraView =
   UIManager.getViewManagerConfig(ComponentName) != null
     ? requireNativeComponent<StudyCameraProps>(ComponentName)
     : () => {
@@ -32,6 +35,10 @@ export class CameraView extends Component<StudyCameraProps> {
     return <StudyCameraView {...this.props} />;
   }
 
-  componentDidMount() {}
-  componentWillUnmount() {}
+  componentDidMount() {
+    StudyCameraModule.resumeCamera();
+  }
+  componentWillUnmount() {
+    StudyCameraModule.pauseCamera();
+  }
 }

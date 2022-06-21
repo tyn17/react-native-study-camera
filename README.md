@@ -26,13 +26,13 @@ Add this to AndroidManifest.xml
 ## Usage
 
 ```js
-import { StudyCameraView } from "react-native-study-camera";
+import { CameraView } from 'react-native-study-camera';
 
 // ...
 const handleCapturedPhoto = (imageBase64: String) => {
     // ...
 };
-<StudyCameraView style={...} bodyPart={2} onCaptured={(event) => handleCapturedPhoto(event.nativeEvent.imageBase64) />
+<CameraView style={...} bodyPart={2} onCaptured={(event) => handleCapturedPhoto(event.nativeEvent.imageBase64) />
 ```
 
 ## Contributing

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { StyleSheet, View } from 'react-native';
-import { StudyCameraView } from 'react-native-study-camera';
+import { CameraView } from 'react-native-study-camera';
 
 export default function App() {
   const onCaptured = (imageBase64: String) => {
@@ -9,7 +9,7 @@ export default function App() {
   };
   return (
     <View style={styles.container}>
-      <StudyCameraView
+      <CameraView
         style={styles.box}
         bodyPart={1}
         onCaptured={(event) => onCaptured(event.nativeEvent.imageBase64)}

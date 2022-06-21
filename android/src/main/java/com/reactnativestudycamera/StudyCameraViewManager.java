@@ -29,6 +29,10 @@ public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> 
     return this.cameraPreviewView;
   }
 
+  public CameraPreviewView getCameraPreviewView() {
+    return cameraPreviewView;
+  }
+
   @ReactProp(name = "bodyPart")
   public void setBodyPart(CameraPreviewView view, int bodyPart) {
     view.setBodyPart(bodyPart);
@@ -45,15 +49,5 @@ public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> 
         MapBuilder.of("bubbled", "onCaptured")
       )
     ).build();
-  }
-
-  @ReactMethod
-  public void resumeCamera() {
-    cameraPreviewView.resume();
-  }
-
-  @ReactMethod
-  public void pauseCamera() {
-    cameraPreviewView.pause();
   }
 }
