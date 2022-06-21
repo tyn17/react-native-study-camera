@@ -12,8 +12,9 @@ const LINKING_ERROR =
   '- You are not using Expo managed workflow\n';
 
 type StudyCameraProps = {
-  color: string;
+  bodyPart: number;
   style: ViewStyle;
+  onCaptured: (event: Event) => void;
 };
 
 const ComponentName = 'StudyCameraView';

@@ -20,8 +20,10 @@ Or in package.json
 import { StudyCameraView } from "react-native-study-camera";
 
 // ...
-
-<StudyCameraView color="tomato" />
+const handleCapturedPhoto = (imageBase64: String) => {
+    // ...
+};
+<StudyCameraView style={...} bodyPart={2} onCaptured={(event) => handleCapturedPhoto(event.nativeEvent.imageBase64) />
 ```
 
 ## Contributing

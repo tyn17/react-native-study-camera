@@ -1,26 +1,35 @@
 package com.reactnativestudycamera;
 
 import android.content.Context;
-import android.graphics.Color;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.TextView;
+
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.uimanager.ThemedReactContext;
+import com.facebook.react.uimanager.events.RCTEventEmitter;
 
 public class CameraPreviewView extends LinearLayout {
-  private Context context;
-  public CameraPreviewView(Context context) {
+  private ThemedReactContext context;
+  private int bodyPart;
+  public CameraPreviewView(ThemedReactContext context) {
     super(context);
     this.context = context;
     initialize();
   }
 
   private void initialize() {
-    // set padding and background color
-    this.setPadding(16,16,16,16);
-    this.setBackgroundColor(Color.parseColor("#5FD3F3"));
+    inflate(this.context, R.layout.camera_preview, this);
+    ImageButton clickButton = findViewById(R.id.btnCapture);
+    final Context _context = context;
+    clickButton.setOnClickListener(v -> {
+      WritableMap event = Arguments.createMap();
+      event.putString("imageBase64", Constants.demoImage);
+      context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "capturedPhotoEvent", event);
+    });
+  }
 
-    // add default text view
-    TextView text = new TextView(context);
-    text.setText("Welcome to Android Fragments with React Native.");
-    this.addView(text);
+  public void setBodyPart(int bodyPart) {
+    this.bodyPart = bodyPart;
   }
 }

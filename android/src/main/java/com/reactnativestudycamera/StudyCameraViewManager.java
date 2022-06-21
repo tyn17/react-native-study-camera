@@ -1,12 +1,13 @@
 package com.reactnativestudycamera;
 
-import android.graphics.Color;
-import android.view.View;
-import android.widget.FrameLayout;
+import androidx.annotation.Nullable;
 
+import com.facebook.react.common.MapBuilder;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
+
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -25,8 +26,21 @@ public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> 
     return new CameraPreviewView(reactContext);
   }
 
-  @ReactProp(name = "color")
-  public void setColor(View view, String color) {
-    view.setBackgroundColor(Color.parseColor(color));
+  @ReactProp(name = "bodyPart")
+  public void setBodyPart(CameraPreviewView view, int bodyPart) {
+    view.setBodyPart(bodyPart);
+  }
+
+  @Nullable
+  @Override
+  public Map<String, Object> getExportedCustomBubblingEventTypeConstants() {
+    MapBuilder.Builder<String, Object> builder = MapBuilder.builder();
+    return  builder.put(
+      "capturedPhotoEvent",
+      MapBuilder.of(
+        "phasedRegistrationNames",
+        MapBuilder.of("bubbled", "onCaptured")
+      )
+    ).build();
   }
 }

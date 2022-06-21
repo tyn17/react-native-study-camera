@@ -4,9 +4,16 @@ import { StyleSheet, View } from 'react-native';
 import { StudyCameraView } from 'react-native-study-camera';
 
 export default function App() {
+  const onCaptured = (imageBase64: String) => {
+    console.log(imageBase64);
+  };
   return (
     <View style={styles.container}>
-      <StudyCameraView color="#32a852" style={styles.box} />
+      <StudyCameraView
+        style={styles.box}
+        bodyPart={1}
+        onCaptured={(event) => onCaptured(event.nativeEvent.imageBase64)}
+      />
     </View>
   );
 }
@@ -18,8 +25,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
+    width: '100%',
+    height: '100%',
   },
 });
