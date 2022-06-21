@@ -17,7 +17,7 @@ const LINKING_ERROR =
 type StudyCameraProps = {
   bodyPart: number;
   style: ViewStyle;
-  onCaptured: (event: NativeSyntheticEvent<String>) => void;
+  onCaptured: (event: NativeSyntheticEvent<any>) => void;
 };
 
 const ComponentName = 'StudyCameraView';
