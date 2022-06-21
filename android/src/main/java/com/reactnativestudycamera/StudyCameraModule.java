@@ -28,11 +28,13 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void resumeCamera() {
-    cameraPreviewView.resume();
+    System.out.println("CALL Resume Camera");
+    //cameraPreviewView.resume();
   }
 
   @ReactMethod
   public void pauseCamera() {
-    cameraPreviewView.pause();
+    System.out.println("CALL Pause Camera");
+    //cameraPreviewView.pause();
   }
 }
