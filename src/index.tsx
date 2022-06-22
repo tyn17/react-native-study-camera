@@ -7,6 +7,7 @@ import {
   NativeModules,
   NativeSyntheticEvent,
   AppState,
+  AppStateStatus,
 } from 'react-native';
 
 const LINKING_ERROR =
@@ -42,6 +43,22 @@ export class CameraView extends Component<CameraViewProps> {
   appState = AppState.currentState;
   appStateSubscription: any;
 
+  appStateHandler = (nextAppState: AppStateStatus) => {
+    if (
+      this.appState.match(/inactive|background/) &&
+      nextAppState === 'active'
+    ) {
+      StudyCameraModule.resumeCamera();
+    } else if (
+      this.appState.match(/active/) &&
+      nextAppState.match(/inactive|background/)
+    ) {
+      StudyCameraModule.pauseCamera();
+    }
+
+    this.appState = nextAppState;
+  };
+
   render() {
     return (
       <StudyCameraView
@@ -60,26 +77,16 @@ export class CameraView extends Component<CameraViewProps> {
 
     this.appStateSubscription = AppState.addEventListener(
       'change',
-      (nextAppState) => {
-        if (
-          this.appState.match(/inactive|background/) &&
-          nextAppState === 'active'
-        ) {
-          StudyCameraModule.resumeCamera();
-        } else if (
-          this.appState.match(/active/) &&
-          nextAppState.match(/inactive|background/)
-        ) {
-          StudyCameraModule.pauseCamera();
-        }
-
-        this.appState = nextAppState;
-      }
+      this.appStateHandler
     );
   }
   componentWillUnmount() {
     StudyCameraModule.pauseCamera();
-    this.appStateSubscription.remove();
+    if (this.appStateSubscription && this.appStateSubscription.remove) {
+      this.appStateSubscription.remove();
+    } else {
+      AppState.removeEventListener('change', this.appStateHandler);
+    }
   }
 
   //Call capture photo
