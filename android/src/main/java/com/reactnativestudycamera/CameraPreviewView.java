@@ -82,11 +82,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     inflate(this.context, R.layout.camera_preview, this);
     textureView = (TextureView) findViewById(R.id.textureView);
     textureView.setSurfaceTextureListener(this);
-
-    ImageButton clickButton = findViewById(R.id.btnCapture);
-    clickButton.setOnClickListener(v -> {
-      lockFocus();
-    });
+    startBackgroundThread();
   }
 
   public void setBodyPart(int bodyPart) {
@@ -265,7 +261,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   /**
    * Trigger Take Picture
    */
-  void takePicture() {
+  private void takePicture() {
     try
     {
       final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -290,7 +286,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
         @Override
         public void onCaptureFailed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureFailure failure) {
           super.onCaptureFailed(session, request, failure);
-          Toast.makeText(context, "Image Capture - Failed. " + failure.toString(), Toast.LENGTH_SHORT).show();
+          Toast.makeText(context, "Failed. " + failure.toString(), Toast.LENGTH_SHORT).show();
         }
       };
       cameraCaptureSession.capture(captureBuilder.build(), captureCallback, null);
@@ -328,24 +324,40 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   }
 
   //Start Background Thread
-  void startBackgroundThread() {
-    backgroundThread = new HandlerThread("BelleCameraBackground");
-    backgroundThread.start();
-    backgroundHandler = new Handler(backgroundThread.getLooper());
-  }
-
-  //Stop Background Thread
-  void stopBackgroundThread() {
-    backgroundThread.quitSafely();
-    try {
-      backgroundThread.join();
-      backgroundThread = null;
-      backgroundHandler = null;
-    } catch (Exception ex) {
-      ex.printStackTrace();
+  private void startBackgroundThread() {
+    if (backgroundThread == null || !backgroundThread.isAlive()) {
+      backgroundThread = new HandlerThread("BelleCameraBackground");
+      backgroundThread.start();
+      backgroundHandler = new Handler(backgroundThread.getLooper());
     }
   }
 
+  //Stop Background Thread
+  private void stopBackgroundThread() {
+    if (backgroundThread != null) {
+      backgroundThread.quitSafely();
+      try {
+        backgroundThread.join();
+        backgroundThread = null;
+        backgroundHandler = null;
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+  }
+  //----PUBLIC METHODS------
+  // Call Take Picture
+  public void capturePhoto() {
+    if (this.bodyPart < 0) {
+      //TEST MODE - return hardcode image
+      WritableMap event = Arguments.createMap();
+      event.putString("imageBase64", Constants.demoImage);
+      context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "capturedPhotoEvent", event);
+      return;
+    }
+    //The photo will be captured on Lock Focus Callback
+    lockFocus();
+  }
   // Theses should be called when change React-Native Activity Lifecycle
   public void resume() {
     startBackgroundThread();
@@ -359,6 +371,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     closeCamera();
     stopBackgroundThread();
   }
+  //----END PUBLIC METHODS------
 
   //-------TextureView.SurfaceTextureListener--------
   @Override

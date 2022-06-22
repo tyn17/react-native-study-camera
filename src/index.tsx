@@ -20,6 +20,13 @@ type StudyCameraProps = {
   onCaptured: (event: NativeSyntheticEvent<any>) => void;
 };
 
+type CameraViewProps = {
+  bodyPart: number;
+  style: ViewStyle;
+  onRef?: (ref: CameraView) => void;
+  onCaptured: (event: NativeSyntheticEvent<any>) => void;
+};
+
 const ComponentName = 'StudyCameraView';
 const { StudyCameraModule } = NativeModules;
 
@@ -30,15 +37,29 @@ const StudyCameraView =
         throw new Error(LINKING_ERROR);
       };
 // CameraView Wrapper Component
-export class CameraView extends Component<StudyCameraProps> {
+export class CameraView extends Component<CameraViewProps> {
   render() {
-    return <StudyCameraView {...this.props} />;
+    return (
+      <StudyCameraView
+        style={this.props.style}
+        bodyPart={this.props.bodyPart}
+        onCaptured={this.props.onCaptured}
+      />
+    );
   }
 
   componentDidMount() {
+    if (this.props.onRef) {
+      this.props.onRef(this);
+    }
     StudyCameraModule.resumeCamera();
   }
   componentWillUnmount() {
     StudyCameraModule.pauseCamera();
+  }
+
+  //Call capture photo
+  capturePhoto() {
+    StudyCameraModule.capturePhoto();
   }
 }
