@@ -21,7 +21,7 @@ def safeExtGet(prop, fallback) {
 android {
     compileSdkVersion safeExtGet('StudyCamera_compileSdkVersion', 30)
     defaultConfig {
-        minSdkVersion safeExtGet('StudyCamera_minSdkVersion', 29)
+        minSdkVersion safeExtGet('StudyCamera_minSdkVersion', 22)
         targetSdkVersion safeExtGet('StudyCamera_targetSdkVersion', 30)
         versionCode 1
         versionName "1.0"
