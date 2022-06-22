@@ -23,6 +23,7 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
@@ -325,6 +326,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   //Start Background Thread
   private void startBackgroundThread() {
+    Log.d("STUDY-CAMERA", "Start Background Thread");
     if (backgroundThread == null || !backgroundThread.isAlive()) {
       backgroundThread = new HandlerThread("BelleCameraBackground");
       backgroundThread.start();
@@ -334,6 +336,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   //Stop Background Thread
   private void stopBackgroundThread() {
+    Log.d("STUDY-CAMERA", "Stop Background Thread");
     if (backgroundThread != null) {
       backgroundThread.quitSafely();
       try {
@@ -348,6 +351,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   //----PUBLIC METHODS------
   // Call Take Picture
   public void capturePhoto() {
+    Log.d("STUDY-CAMERA", "Call Capture Photo");
     if (this.bodyPart < 0) {
       //TEST MODE - return hardcode image
       WritableMap event = Arguments.createMap();

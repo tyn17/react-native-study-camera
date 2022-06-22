@@ -6,6 +6,7 @@ import {
   ViewStyle,
   NativeModules,
   NativeSyntheticEvent,
+  AppState,
 } from 'react-native';
 
 const LINKING_ERROR =
@@ -38,6 +39,9 @@ const StudyCameraView =
       };
 // CameraView Wrapper Component
 export class CameraView extends Component<CameraViewProps> {
+  appState = AppState.currentState;
+  appStateSubscription: any;
+
   render() {
     return (
       <StudyCameraView
@@ -53,9 +57,29 @@ export class CameraView extends Component<CameraViewProps> {
       this.props.onRef(this);
     }
     StudyCameraModule.resumeCamera();
+
+    this.appStateSubscription = AppState.addEventListener(
+      'change',
+      (nextAppState) => {
+        if (
+          this.appState.match(/inactive|background/) &&
+          nextAppState === 'active'
+        ) {
+          StudyCameraModule.resumeCamera();
+        } else if (
+          this.appState.match(/active/) &&
+          nextAppState.match(/inactive|background/)
+        ) {
+          StudyCameraModule.pauseCamera();
+        }
+
+        this.appState = nextAppState;
+      }
+    );
   }
   componentWillUnmount() {
     StudyCameraModule.pauseCamera();
+    this.appStateSubscription.remove();
   }
 
   //Call capture photo

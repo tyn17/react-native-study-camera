@@ -6,7 +6,7 @@ import { CameraView } from 'react-native-study-camera';
 export default function App() {
   const cameraRef = React.useRef<CameraView>(null);
   const onCaptured = (imageBase64: String) => {
-    console.log(imageBase64);
+    console.error(imageBase64);
   };
   const captureTop = (Dimensions.get('window').width * 4) / 3 - 50;
   return (
