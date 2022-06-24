@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import { Button, Dimensions, StyleSheet, View } from 'react-native';
-import { CameraView } from 'react-native-study-camera';
+import { Button, Dimensions, StyleSheet, Text, View } from 'react-native';
+import { CameraView, DetectionMode } from 'react-native-study-camera';
 
 export default function App() {
-  const cameraRef = React.useRef<CameraView>(null);
+  const [msg, setMsg] = React.useState('Capture');
+  const cameraRef = React.useRef<CameraView | null>(null);
   const onCaptured = (imageBase64: String) => {
-    console.error(imageBase64);
+    console.error('Captured Image with Length: ' + imageBase64.length);
   };
   const captureTop = (Dimensions.get('window').width * 4) / 3 - 50;
   return (
@@ -14,19 +15,23 @@ export default function App() {
       <CameraView
         onRef={(ref) => (cameraRef.current = ref)}
         style={styles.box}
-        bodyPart={-1}
-        onCaptured={(event) => onCaptured(event.nativeEvent.imageBase64)}
+        bodyPart={1}
+        visualMask={true}
+        detectionMode={DetectionMode.POSE}
+        onCaptured={(imageBase64) => onCaptured(imageBase64)}
+        onPoseVerify={(msgKey) => setMsg(msgKey)}
       />
       <View style={[styles.buttons, { top: captureTop }]}>
         <Button
           color="#00f"
-          title="Capture"
+          title="Take photo"
           disabled={false}
           onPress={() => {
-            cameraRef.current.capturePhoto();
+            cameraRef.current!.capturePhoto();
           }}
         />
       </View>
+      <Text>{msg}</Text>
     </View>
   );
 }

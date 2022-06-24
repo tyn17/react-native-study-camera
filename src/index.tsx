@@ -9,6 +9,9 @@ import {
   AppState,
   AppStateStatus,
 } from 'react-native';
+import { DetectionMessageKeys, DetectionMode, PoseResult } from './pose_types';
+import { verifyPose } from './pose_verify';
+export * from './pose_types';
 
 const LINKING_ERROR =
   `The package 'react-native-study-camera' doesn't seem to be linked. Make sure: \n\n` +
@@ -19,14 +22,20 @@ const LINKING_ERROR =
 type StudyCameraProps = {
   bodyPart: number;
   style: ViewStyle;
+  detectionMode: DetectionMode;
+  visualMask: boolean;
   onCaptured: (event: NativeSyntheticEvent<any>) => void;
+  onDetected: (event: NativeSyntheticEvent<any>) => void;
 };
 
 type CameraViewProps = {
   bodyPart: number;
+  detectionMode?: DetectionMode;
+  visualMask?: boolean;
   style: ViewStyle;
   onRef?: (ref: CameraView) => void;
-  onCaptured: (event: NativeSyntheticEvent<any>) => void;
+  onCaptured: (imageBase64: string) => void;
+  onPoseVerify?: (message: DetectionMessageKeys) => void;
 };
 
 const ComponentName = 'StudyCameraView';
@@ -42,6 +51,12 @@ const StudyCameraView =
 export class CameraView extends Component<CameraViewProps> {
   appState = AppState.currentState;
   appStateSubscription: any;
+
+  constructor(props: CameraViewProps | Readonly<CameraViewProps>) {
+    super(props);
+    this.onPoseDetection = this.onPoseDetection.bind(this);
+    this.onPhotoCaptured = this.onPhotoCaptured.bind(this);
+  }
 
   appStateHandler = (nextAppState: AppStateStatus) => {
     if (
@@ -64,9 +79,28 @@ export class CameraView extends Component<CameraViewProps> {
       <StudyCameraView
         style={this.props.style}
         bodyPart={this.props.bodyPart}
-        onCaptured={this.props.onCaptured}
+        detectionMode={this.props.detectionMode || DetectionMode.NONE}
+        visualMask={this.props.visualMask || false}
+        onCaptured={this.onPhotoCaptured}
+        onDetected={this.onPoseDetection}
       />
     );
+  }
+
+  onPoseDetection(event: NativeSyntheticEvent<any>) {
+    if (this.props.onPoseVerify) {
+      const poseData = event.nativeEvent.pose;
+      if (poseData) {
+        const pose: PoseResult = JSON.parse(poseData);
+        const message = verifyPose(pose);
+        this.props.onPoseVerify(message);
+      }
+    }
+  }
+
+  onPhotoCaptured(event: NativeSyntheticEvent<any>) {
+    const imageBase64 = event.nativeEvent.imageBase64;
+    this.props.onCaptured(imageBase64);
   }
 
   componentDidMount() {
@@ -80,6 +114,7 @@ export class CameraView extends Component<CameraViewProps> {
       this.appStateHandler
     );
   }
+
   componentWillUnmount() {
     StudyCameraModule.pauseCamera();
     if (this.appStateSubscription && this.appStateSubscription.remove) {

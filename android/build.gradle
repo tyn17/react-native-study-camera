@@ -53,8 +53,15 @@ repositories {
     jcenter()
 }
 
+// Download tflite model
+apply from:"download.gradle"
+
 dependencies {
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'// From node_modules
+
+    implementation 'org.tensorflow:tensorflow-lite:2.7.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.5.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.3.0'
 }

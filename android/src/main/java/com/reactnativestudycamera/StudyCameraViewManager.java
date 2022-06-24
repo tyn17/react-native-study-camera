@@ -38,6 +38,16 @@ public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> 
     view.setBodyPart(bodyPart);
   }
 
+  @ReactProp(name = "visualMask")
+  public void setVisualMask(CameraPreviewView view, boolean visualMask) {
+    view.setVisualMask(visualMask);
+  }
+
+  @ReactProp(name = "detectionMode")
+  public void setDetectionMode(CameraPreviewView view, int detectionMode) {
+    view.setDetectionMode(detectionMode);
+  }
+
   @Nullable
   @Override
   public Map<String, Object> getExportedCustomBubblingEventTypeConstants() {
@@ -47,6 +57,12 @@ public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> 
       MapBuilder.of(
         "phasedRegistrationNames",
         MapBuilder.of("bubbled", "onCaptured")
+      )
+    ).put(
+      "detectionEvent",
+      MapBuilder.of(
+        "phasedRegistrationNames",
+        MapBuilder.of("bubbled", "onDetected")
       )
     ).build();
   }

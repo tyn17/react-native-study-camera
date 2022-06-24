@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -28,7 +29,6 @@ import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -39,13 +39,19 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
+import com.reactnativestudycamera.consts.Constants;
+import com.reactnativestudycamera.consts.DetectionMode;
+import com.reactnativestudycamera.drawing.PoseCanvasView;
+import com.reactnativestudycamera.posedetection.FrameHandler;
+import com.reactnativestudycamera.posedetection.intefaces.FrameHandlerListener;
+import com.reactnativestudycamera.posedetection.datamodels.PoseResult;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class CameraPreviewView extends LinearLayout implements TextureView.SurfaceTextureListener {
+public class CameraPreviewView extends LinearLayout implements TextureView.SurfaceTextureListener, FrameHandlerListener {
   static int REQUEST_CAMERA_PERMISSION = 200;
   static final SparseIntArray ORIENTATIONS = new SparseIntArray();
   static {
@@ -61,6 +67,8 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   private ThemedReactContext context;
   private int bodyPart;
+  private boolean visualMask;
+  private int detectionMode;
 
   private TextureView textureView;
   private Size previewSize;
@@ -72,6 +80,8 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   private HandlerThread backgroundThread;
   private Handler backgroundHandler;
+  private FrameHandler frameHandler;
+  private PoseCanvasView maskView;
 
   public CameraPreviewView(ThemedReactContext context) {
     super(context);
@@ -83,11 +93,27 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     inflate(this.context, R.layout.camera_preview, this);
     textureView = (TextureView) findViewById(R.id.textureView);
     textureView.setSurfaceTextureListener(this);
+
+    maskView = findViewById(R.id.maskView);
     startBackgroundThread();
   }
 
   public void setBodyPart(int bodyPart) {
     this.bodyPart = bodyPart;
+  }
+
+  public void setVisualMask(boolean visualMask) {
+    this.visualMask = visualMask;
+    maskView.setVisibility(visualMask ? VISIBLE : GONE);
+  }
+
+  public void setDetectionMode(int detectionMode) {
+    this.detectionMode = detectionMode;
+    if (detectionMode == DetectionMode.NONE) {
+      disableDetection();
+    } else {
+      enableDetection();
+    }
   }
 
   //Setup Camera
@@ -252,7 +278,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
         //Return Image to React-Native
         WritableMap event = Arguments.createMap();
         event.putString("imageBase64", Utils.base64Image(bytes));
-        context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "capturedPhotoEvent", event);
+        sendEvent("capturedPhotoEvent", event);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -324,6 +350,28 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     }
   }
 
+  //Enable Detection
+  private void enableDetection() {
+    if (frameHandler == null) frameHandler = new FrameHandler(this);
+    try {
+      frameHandler.startDetector(context.getApplicationContext());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  //Disable Detection
+  private void disableDetection() {
+    if (frameHandler != null) {
+      try {
+        frameHandler.stopDetector();
+        frameHandler = null;
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
   //Start Background Thread
   private void startBackgroundThread() {
     Log.d("STUDY-CAMERA", "Start Background Thread");
@@ -332,6 +380,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
       backgroundThread.start();
       backgroundHandler = new Handler(backgroundThread.getLooper());
     }
+    enableDetection();
   }
 
   //Stop Background Thread
@@ -347,6 +396,12 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
         ex.printStackTrace();
       }
     }
+    disableDetection();
+  }
+
+  //Send Event to Js
+  private void sendEvent(String eventName, WritableMap event) {
+    context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), eventName, event);
   }
   //----PUBLIC METHODS------
   // Call Take Picture
@@ -356,12 +411,13 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
       //TEST MODE - return hardcode image
       WritableMap event = Arguments.createMap();
       event.putString("imageBase64", Constants.demoImage);
-      context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "capturedPhotoEvent", event);
+      sendEvent("capturedPhotoEvent", event);
       return;
     }
     //The photo will be captured on Lock Focus Callback
     lockFocus();
   }
+
   // Theses should be called when change React-Native Activity Lifecycle
   public void resume() {
     startBackgroundThread();
@@ -396,7 +452,21 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   @Override
   public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+    if (detectionMode == DetectionMode.NONE || frameHandler == null || frameHandler.isProcessing()) return;
+    Bitmap photo = textureView.getBitmap();
+    frameHandler.processBitmap(photo);
   }
   //-----End TextureView.SurfaceTextureListener------
+  //-----FrameHandleListener------
+  @Override
+  public void onResult(PoseResult result) {
+    //Log.d("POSING", result.toString());
+    WritableMap event = Arguments.createMap();
+    event.putString("pose", result.serialize());
+    sendEvent("detectionEvent", event);
+    if (maskView != null && visualMask) {
+      maskView.drawPose(result);
+    }
+  }
+  //-----End FrameHandleListener------
 }
