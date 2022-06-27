@@ -15,7 +15,7 @@ export default function App() {
       <CameraView
         onRef={(ref) => (cameraRef.current = ref)}
         style={styles.box}
-        bodyPart={1}
+        bodyPart={0}
         visualMask={true}
         detectionMode={DetectionMode.POSE}
         onCaptured={(imageBase64) => onCaptured(imageBase64)}
@@ -31,7 +31,7 @@ export default function App() {
           }}
         />
       </View>
-      <Text>{msg}</Text>
+      <Text style={styles.messages}>{msg}</Text>
     </View>
   );
 }
@@ -50,5 +50,9 @@ const styles = StyleSheet.create({
   buttons: {
     position: 'absolute',
     zIndex: 999,
+  },
+  messages: {
+    position: 'absolute',
+    bottom: 50,
   },
 });

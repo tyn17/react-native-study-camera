@@ -9,7 +9,14 @@ import {
   AppState,
   AppStateStatus,
 } from 'react-native';
-import { DetectionMessageKeys, DetectionMode, PoseResult } from './pose_types';
+import {
+  defaultOptions,
+  CaptureBodyPart,
+  DetectionMessageKeys,
+  DetectionMode,
+  PoseDetectOptions,
+  PoseResult,
+} from './pose_types';
 import { verifyPose } from './pose_verify';
 export * from './pose_types';
 
@@ -20,7 +27,7 @@ const LINKING_ERROR =
   '- You are not using Expo managed workflow\n';
 
 type StudyCameraProps = {
-  bodyPart: number;
+  bodyPart: CaptureBodyPart;
   style: ViewStyle;
   detectionMode: DetectionMode;
   visualMask: boolean;
@@ -29,10 +36,11 @@ type StudyCameraProps = {
 };
 
 type CameraViewProps = {
-  bodyPart: number;
+  bodyPart: CaptureBodyPart;
   detectionMode?: DetectionMode;
   visualMask?: boolean;
   style: ViewStyle;
+  poseDetectOptions?: PoseDetectOptions;
   onRef?: (ref: CameraView) => void;
   onCaptured: (imageBase64: string) => void;
   onPoseVerify?: (message: DetectionMessageKeys) => void;
@@ -92,7 +100,11 @@ export class CameraView extends Component<CameraViewProps> {
       const poseData = event.nativeEvent.pose;
       if (poseData) {
         const pose: PoseResult = JSON.parse(poseData);
-        const message = verifyPose(pose);
+        const message = verifyPose(
+          pose,
+          this.props.bodyPart,
+          this.props.poseDetectOptions || defaultOptions
+        );
         this.props.onPoseVerify(message);
       }
     }
