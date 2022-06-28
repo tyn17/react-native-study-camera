@@ -28,6 +28,7 @@ const LINKING_ERROR =
 
 type StudyCameraProps = {
   bodyPart: CaptureBodyPart;
+  subFolder: String;
   style: ViewStyle;
   detectionMode: DetectionMode;
   visualMask: boolean;
@@ -37,6 +38,7 @@ type StudyCameraProps = {
 
 type CameraViewProps = {
   bodyPart: CaptureBodyPart;
+  subFolder: String;
   detectionMode?: DetectionMode;
   visualMask?: boolean;
   style: ViewStyle;
@@ -87,6 +89,7 @@ export class CameraView extends Component<CameraViewProps> {
       <StudyCameraView
         style={this.props.style}
         bodyPart={this.props.bodyPart}
+        subFolder={this.props.subFolder}
         detectionMode={this.props.detectionMode || DetectionMode.NONE}
         visualMask={this.props.visualMask || false}
         onCaptured={this.onPhotoCaptured}
@@ -139,5 +142,23 @@ export class CameraView extends Component<CameraViewProps> {
   //Call capture photo
   capturePhoto() {
     StudyCameraModule.capturePhoto();
+  }
+
+  /**
+   * Delete Cached Files
+   * @param subFolder
+   */
+  static deleteCacheFiles(subFolder: String) {
+    StudyCameraModule.deleteCache(subFolder);
+  }
+
+  static getCacheFiles(subFolder: String) {
+    return new Promise<any>((resolve, reject) => {
+      StudyCameraModule.getCacheFiles(
+        subFolder,
+        (err: any) => reject(err),
+        (data: any) => resolve(JSON.parse(data))
+      );
+    });
   }
 }

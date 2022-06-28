@@ -20,8 +20,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
-import android.media.MediaScannerConnection;
-import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
@@ -33,6 +32,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import com.facebook.react.bridge.Arguments;
@@ -43,13 +43,14 @@ import com.reactnativestudycamera.consts.Constants;
 import com.reactnativestudycamera.consts.DetectionMode;
 import com.reactnativestudycamera.drawing.PoseCanvasView;
 import com.reactnativestudycamera.posedetection.FrameHandler;
-import com.reactnativestudycamera.posedetection.intefaces.FrameHandlerListener;
 import com.reactnativestudycamera.posedetection.datamodels.PoseResult;
+import com.reactnativestudycamera.posedetection.intefaces.FrameHandlerListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 
 public class CameraPreviewView extends LinearLayout implements TextureView.SurfaceTextureListener, FrameHandlerListener {
   static int REQUEST_CAMERA_PERMISSION = 200;
@@ -66,6 +67,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   private int state = STATE_PREVIEW;
 
   private ThemedReactContext context;
+  private String subFolder;
   private int bodyPart;
   private boolean visualMask;
   private int detectionMode;
@@ -102,6 +104,10 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     this.bodyPart = bodyPart;
   }
 
+  public void setSubFolder(String subFolder) {
+    this.subFolder = subFolder;
+  }
+
   public void setVisualMask(boolean visualMask) {
     this.visualMask = visualMask;
     maskView.setVisibility(visualMask ? VISIBLE : GONE);
@@ -117,6 +123,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   }
 
   //Setup Camera
+  @RequiresApi(api = Build.VERSION_CODES.M)
   void setupCamera() {
     CameraManager cameraManager = (CameraManager) context.getCurrentActivity().getSystemService(Context.CAMERA_SERVICE);
     try {
@@ -261,19 +268,15 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   };
 
   final private ImageReader.OnImageAvailableListener onImageAvailableListener = new ImageReader.OnImageAvailableListener() {
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onImageAvailable(ImageReader reader) {
-      File file = Utils.createNewImageFile();
+      File file = Utils.createNewImageFile(context, subFolder, "" + bodyPart);
       try (Image image = reader.acquireLatestImage()) {
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
         Utils.save(file, bytes);
-        MediaScannerConnection.scanFile(context, new String[]{file.getAbsolutePath()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-          @Override
-          public void onScanCompleted(String path, Uri uri) {
-          }
-        });
 
         //Return Image to React-Native
         WritableMap event = Arguments.createMap();
@@ -307,7 +310,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
         @Override
         public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
           super.onCaptureCompleted(session, request, result);
-          Toast.makeText(context, "Image Capture - Expected(" + imageReader.getWidth() + " x " + imageReader.getHeight() + ")", Toast.LENGTH_SHORT).show();
+          Toast.makeText(context, "Captured a photo", Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -419,6 +422,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   }
 
   // Theses should be called when change React-Native Activity Lifecycle
+  @RequiresApi(api = Build.VERSION_CODES.M)
   public void resume() {
     startBackgroundThread();
     textureView.setSurfaceTextureListener(this);
@@ -431,9 +435,19 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     closeCamera();
     stopBackgroundThread();
   }
+
+  @RequiresApi(api = Build.VERSION_CODES.O)
+  public List<CacheFileModel> getCacheFiles(String subFolder) {
+    return Utils.getCacheFiles(context, subFolder);
+  }
+
+  public void deleteCache(String subFolder) {
+    Utils.deleteCache(context, subFolder);
+  }
   //----END PUBLIC METHODS------
 
   //-------TextureView.SurfaceTextureListener--------
+  @RequiresApi(api = Build.VERSION_CODES.M)
   @Override
   public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
     setupCamera();

@@ -38,6 +38,11 @@ public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> 
     view.setBodyPart(bodyPart);
   }
 
+  @ReactProp(name = "subFolder")
+  public void setSubFolder(CameraPreviewView view, String subFolder) {
+    view.setSubFolder(subFolder);
+  }
+
   @ReactProp(name = "visualMask")
   public void setVisualMask(CameraPreviewView view, boolean visualMask) {
     view.setVisualMask(visualMask);
