@@ -18,9 +18,9 @@ Or in package.json
 ## Android
 Add this to AndroidManifest.xml
 ```xml
-	<uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-feature android:name="android.hardware.camera2.full"/>
+<uses-permission android:name="android.permission.CAMERA"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+<uses-feature android:name="android.hardware.camera2.full"/>
 ```
 
 ## Usage
@@ -42,10 +42,10 @@ const handleCapturedPhoto = (imageBase64: String) => {
         onPoseVerify={(msgKey) => console.log(msgKey)}
       />
 ```
-bodyPart: 0, 1, 2, 3
-visualMask: true - display Pose Lines; false - hide Pose Lines
-detectionMode: POSE/NONE
-onPoseVerify: Message Key of validation POSE position. Only DetectionMode = POSE
+**bodyPart**: 0, 1, 2, 3  
+**visualMask**: true - display Pose Lines; false - hide Pose Lines  
+**detectionMode**: POSE/NONE  
+**onPoseVerify**: Message Key of validation POSE position. Only DetectionMode = POSE  
 
 ## Call Native Methods
 ```js
