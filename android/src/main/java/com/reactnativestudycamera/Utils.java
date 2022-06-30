@@ -5,6 +5,7 @@ import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Build;
+import android.util.Log;
 import android.util.Size;
 
 import androidx.annotation.RequiresApi;
@@ -61,11 +62,12 @@ public class Utils {
    * @param context
    * @param subFolder
    */
-  public static void deleteCache(Context context, String subFolder) {
+  public static void deleteCaches(Context context, String subFolder) {
     File[] files = getFilesInFolder(context, subFolder);
     if (files != null) {
       for (File file: files) {
         try {
+          Log.d("DELETE IMAGE", file.getAbsolutePath());
           file.delete();
         } catch (Exception ex) {
           ex.printStackTrace();
@@ -75,26 +77,20 @@ public class Utils {
   }
 
   @RequiresApi(api = Build.VERSION_CODES.O)
-  public static List<CacheFileModel> getCacheFiles(Context context, String subFolder) {
-    File[] files = getFilesInFolder(context, subFolder);
-    if (files == null) return null;
-    List<CacheFileModel> result = new ArrayList<>();
-    int[] bodyParts = new int[] {0, 1, 2, 3};
-    for (int bp: bodyParts) {
-      for (File file: files) {
-        if (file.getName().equalsIgnoreCase("" + bp + IMAGE_EXTENSION)) {
-          try {
-            byte[] bytes = Files.readAllBytes(file.toPath());
-            String base64 = base64Image(bytes);
-            result.add(new CacheFileModel(bp, base64));
-            break;
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
+  public static String getCachedImage(Context context, String subFolder, int bodyPart) {
+    String imagePath = getFilesRootFolder(context) + File.separator + subFolder + File.separator + bodyPart + IMAGE_EXTENSION;
+    File file = new File(imagePath);
+    Log.d("GET IMAGE", file.getAbsolutePath());
+    if (file.exists() && file.isFile()) {
+      try {
+        byte[] bytes = Files.readAllBytes(file.toPath());
+        return base64Image(bytes);
+      } catch (IOException e) {
+        e.printStackTrace();
+        return null;
       }
     }
-    return result;
+    return null;
   }
 
   private static File[] getFilesInFolder(Context context, String subFolder) {

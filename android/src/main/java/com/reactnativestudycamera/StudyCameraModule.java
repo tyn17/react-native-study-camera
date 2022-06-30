@@ -54,20 +54,24 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void deleteCache(String subFolder) {
-    Utils.deleteCache(getReactApplicationContext(), subFolder);
+  public void deleteCaches(String subFolder) {
+    Utils.deleteCaches(getReactApplicationContext(), subFolder);
   }
 
   @RequiresApi(api = Build.VERSION_CODES.O)
   @ReactMethod
-  public void getCacheFiles(String subFolder, Promise promise) {
+  public void getCachedFile(String subFolder, int bodyPart, Promise promise) {
     try {
-      Log.d("CACHE FILES", "Begin get cache files of " + subFolder);
-      List<CacheFileModel> list = Utils.getCacheFiles(getReactApplicationContext(), subFolder);
-      promise.resolve(CacheFileModel.serialize(list));
+      Log.d("CACHE FILE", "Begin get cache file " + bodyPart + " of " + subFolder);
+      String imageBase64 = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart);
+      if (imageBase64 != null) {
+        promise.resolve(imageBase64);
+        return;
+      }
+      promise.reject("NOT_FOUND", "File not found");
     } catch (Exception ex) {
       ex.printStackTrace();
-      promise.reject(String.valueOf(0), "Error");
+      promise.reject("ERROR", ex.getMessage());
     }
   }
 }

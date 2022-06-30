@@ -28,19 +28,25 @@ export default function App() {
     setBodyParts(bodyParts);
   };
   const reloadCaches = () => {
-    CameraView.getCacheFiles(subjectId).then(
-      (data) => {
-        bodyParts.forEach((b) => (b.image = ''));
-        data.forEach((item: any) => {
-          bodyParts[
-            item.bodyPart
-          ].image = `data:image/png;base64, ${item.base64Image}`;
-        });
-        setBodyParts(bodyParts);
-        setMsg('Reset cached');
-      },
-      (reason) => console.error(reason)
-    );
+    bodyParts.forEach((bp, index) => {
+      var count = 0;
+      CameraView.getCachedFile(subjectId, index).then((base64: String) => {
+        count++;
+        bp.image = base64 ? `data:image/png;base64, ${base64}` : '';
+        if (count === 4) {
+          setBodyParts(bodyParts);
+          setBodyPart(0);
+        }
+      }).catch((err) => {
+        console.log(err);
+        bp.image = '';
+        count++;
+        if (count === 4) {
+          setBodyParts(bodyParts);
+          setBodyPart(0);
+        }
+      });
+    });
   };
 
   React.useEffect(() => {
@@ -55,7 +61,7 @@ export default function App() {
         style={styles.box}
         bodyPart={bodyPart}
         visualMask={true}
-        detectionMode={DetectionMode.POSE}
+        detectionMode={DetectionMode.NONE}
         subFolder={subjectId}
         onCaptured={(imageBase64) => onCaptured(imageBase64)}
         onPoseVerify={(msgKey) => setMsg(msgKey)}
@@ -95,7 +101,7 @@ export default function App() {
         <Button
           title="Delete cache"
           onPress={() => {
-            CameraView.deleteCacheFiles(subjectId);
+            CameraView.deleteCachedFiles(subjectId);
             reloadCaches();
           }}
         />

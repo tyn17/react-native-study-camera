@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -17,6 +18,7 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
@@ -26,6 +28,7 @@ import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.LinearLayout;
@@ -39,7 +42,6 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
-import com.reactnativestudycamera.consts.Constants;
 import com.reactnativestudycamera.consts.DetectionMode;
 import com.reactnativestudycamera.drawing.PoseCanvasView;
 import com.reactnativestudycamera.posedetection.FrameHandler;
@@ -50,7 +52,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
 
 public class CameraPreviewView extends LinearLayout implements TextureView.SurfaceTextureListener, FrameHandlerListener {
   static int REQUEST_CAMERA_PERMISSION = 200;
@@ -65,6 +66,13 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   private static final int STATE_PREVIEW = 0;
   private static final int STATE_WAIT_LOCK = 1;
   private int state = STATE_PREVIEW;
+//  private int maxAFRegions = 1;
+//  private Rect sensorArraySize = null;
+//  private final MeteringRectangle[] focusAreas = new MeteringRectangle[] {
+//    new MeteringRectangle(1991, 839, 300, 300, 999),
+//    new MeteringRectangle(2221, 2716, 300, 300, 999),
+//    new MeteringRectangle(1014, 1748, 300, 300, 999)
+//  };
 
   private ThemedReactContext context;
   private String subFolder;
@@ -134,13 +142,18 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
           continue;
         }
         StreamConfigurationMap map = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-
         Size mSize = Utils.getSizeByRatio(map, ASPECT_RATIO, false);
         if (imageSize.getWidth() < mSize.getWidth()) {
           previewSize = Utils.getSizeByRatio(map, ASPECT_RATIO, true);
           cameraId = id;
 
           imageSize = mSize;
+
+//          maxAFRegions = cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
+//          sensorArraySize = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+//
+//          Log.d("AFRegion", "MaxRegions: " + maxAFRegions);
+//          Log.d("AFRegion", "Size: " + sensorArraySize.left + ", " + sensorArraySize.top + ", " + sensorArraySize.right + ", " + sensorArraySize.bottom);
         }
       }
 
@@ -296,6 +309,10 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     {
       final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
       captureBuilder.addTarget(imageReader.getSurface());
+//      if (focusAreas != null && focusAreas.length > 0) {
+//        captureBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, focusAreas);
+//      }
+//      captureBuilder.set(CaptureRequest.EDGE_MODE, CameraMetadata.EDGE_MODE_FAST);
       captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
       captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO);
       captureBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_AUTO);
@@ -331,6 +348,9 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   private void lockFocus() {
     try {
       state = STATE_WAIT_LOCK;
+//      if (focusAreas != null && focusAreas.length > 0) {
+//        previewCRBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, focusAreas);
+//      }
       previewCRBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
       previewCRBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
       cameraCaptureSession.capture(previewCRBuilder.build(), cameraSessionCaptureCallback, backgroundHandler);
@@ -411,10 +431,6 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   public void capturePhoto() {
     Log.d("STUDY-CAMERA", "Call Capture Photo");
     if (this.bodyPart < 0) {
-      //TEST MODE - return hardcode image
-      WritableMap event = Arguments.createMap();
-      event.putString("imageBase64", Constants.demoImage);
-      sendEvent("capturedPhotoEvent", event);
       return;
     }
     //The photo will be captured on Lock Focus Callback
@@ -474,4 +490,26 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     }
   }
   //-----End FrameHandleListener------
+
+
+//  @Override
+//  public boolean onTouchEvent(MotionEvent event) {
+//    final int actionMasked = event.getActionMasked();
+//    if (actionMasked != MotionEvent.ACTION_DOWN) {
+//      return false;
+//    }
+//
+//    //TODO: here I just flip x,y, but this needs to correspond with the sensor orientation (via SENSOR_ORIENTATION)
+//    final int y = (int)((event.getX() / (float)this.getWidth())  * (float)sensorArraySize.height());
+//    final int x = (int)((event.getY() / (float)this.getHeight()) * (float)sensorArraySize.width());
+//    final int halfTouchWidth  = 150; //(int)motionEvent.getTouchMajor(); //TODO: this doesn't represent actual touch size in pixel. Values range in [3, 10]...
+//    final int halfTouchHeight = 150; //(int)motionEvent.getTouchMinor();
+//    MeteringRectangle focusAreaTouch = new MeteringRectangle(Math.max(x - halfTouchWidth,  0),
+//      Math.max(y - halfTouchHeight, 0),
+//      halfTouchWidth  * 2,
+//      halfTouchHeight * 2,
+//      MeteringRectangle.METERING_WEIGHT_MAX - 1);
+//    Log.d("FocusArea", focusAreaTouch.getX() + ", " + focusAreaTouch.getY() + ", " + focusAreaTouch.getMeteringWeight());
+//    return true;
+//  }
 }
