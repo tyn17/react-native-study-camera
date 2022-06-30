@@ -1,6 +1,7 @@
 package com.reactnativestudycamera;
 
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -54,18 +55,19 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void deleteCache(String subFolder) {
-    if (cameraViewManager.getCameraPreviewView() != null) {
-      cameraViewManager.getCameraPreviewView().deleteCache(subFolder);
-    }
+    Utils.deleteCache(getReactApplicationContext(), subFolder);
   }
 
   @RequiresApi(api = Build.VERSION_CODES.O)
   @ReactMethod
   public void getCacheFiles(String subFolder, Promise promise) {
-    if (cameraViewManager.getCameraPreviewView() != null) {
-      List<CacheFileModel> list = cameraViewManager.getCameraPreviewView().getCacheFiles(subFolder);
+    try {
+      Log.d("CACHE FILES", "Begin get cache files of " + subFolder);
+      List<CacheFileModel> list = Utils.getCacheFiles(getReactApplicationContext(), subFolder);
       promise.resolve(CacheFileModel.serialize(list));
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      promise.reject(String.valueOf(0), "Error");
     }
-    promise.resolve("[]");
   }
 }

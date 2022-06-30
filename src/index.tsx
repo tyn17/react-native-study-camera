@@ -152,13 +152,8 @@ export class CameraView extends Component<CameraViewProps> {
     StudyCameraModule.deleteCache(subFolder);
   }
 
-  static getCacheFiles(subFolder: String) {
-    return new Promise<any>((resolve, reject) => {
-      StudyCameraModule.getCacheFiles(
-        subFolder,
-        (err: any) => reject(err),
-        (data: any) => resolve(JSON.parse(data))
-      );
-    });
+  static async getCacheFiles(subFolder: String) {
+    const result = await StudyCameraModule.getCacheFiles(subFolder);
+    return JSON.parse(result);
   }
 }

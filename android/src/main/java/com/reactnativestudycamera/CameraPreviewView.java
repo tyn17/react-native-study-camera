@@ -435,15 +435,6 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     closeCamera();
     stopBackgroundThread();
   }
-
-  @RequiresApi(api = Build.VERSION_CODES.O)
-  public List<CacheFileModel> getCacheFiles(String subFolder) {
-    return Utils.getCacheFiles(context, subFolder);
-  }
-
-  public void deleteCache(String subFolder) {
-    Utils.deleteCache(context, subFolder);
-  }
   //----END PUBLIC METHODS------
 
   //-------TextureView.SurfaceTextureListener--------
