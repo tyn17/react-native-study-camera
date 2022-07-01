@@ -152,7 +152,15 @@ export class CameraView extends Component<CameraViewProps> {
     StudyCameraModule.deleteCaches(subFolder);
   }
 
-  static async getCachedFile(subFolder: String, bodyPart: number) {
-    return await StudyCameraModule.getCachedFile(subFolder, bodyPart);
+  static async getCachedFile(
+    subFolder: String,
+    bodyPart: number,
+    isThumbnail: boolean
+  ) {
+    return await StudyCameraModule.getCachedFile(
+      subFolder,
+      bodyPart,
+      isThumbnail
+    );
   }
 }

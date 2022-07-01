@@ -289,7 +289,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
-        Utils.save(file, bytes);
+        Utils.save(file, bytes, true);
 
         //Return Image to React-Native
         WritableMap event = Arguments.createMap();

@@ -49,9 +49,9 @@ const handleCapturedPhoto = (imageBase64: String) => {
 
 ## Call Native Methods
 ```js
-CameraView.deleteCacheFiles("subFolderName")
+CameraView.deleteCachedFiles("subFolderName")
 
-CameraView.getCacheFiles("subFolderName").then((data) => ...)
+CameraView.getCachedFile("subFolderName", 1 /*bodyPart*/, true /*isThumbnail*/).then((data) => ...)
 ```
 
 ## Contributing

@@ -60,10 +60,10 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
 
   @RequiresApi(api = Build.VERSION_CODES.O)
   @ReactMethod
-  public void getCachedFile(String subFolder, int bodyPart, Promise promise) {
+  public void getCachedFile(String subFolder, int bodyPart, boolean isThumb, Promise promise) {
     try {
       Log.d("CACHE FILE", "Begin get cache file " + bodyPart + " of " + subFolder);
-      String imageBase64 = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart);
+      String imageBase64 = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart, isThumb);
       if (imageBase64 != null) {
         promise.resolve(imageBase64);
         return;
