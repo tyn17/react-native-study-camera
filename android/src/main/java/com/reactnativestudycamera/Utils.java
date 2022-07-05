@@ -4,8 +4,10 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.ExifInterface;
 import android.os.Build;
 import android.util.Log;
 import android.util.Size;
@@ -14,16 +16,11 @@ import androidx.annotation.RequiresApi;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 
 public class Utils {
   private static final String IMAGE_EXTENSION = ".JPG";
@@ -68,8 +65,8 @@ public class Utils {
       if (thumbFile.exists() && thumbFile.delete());
       if (thumbFile.createNewFile()) {
         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        float scale = 512.0f / Math.max(bitmap.getWidth(), bitmap.getHeight());
-        Bitmap thumb = Bitmap.createScaledBitmap(bitmap, Math.round(bitmap.getWidth() * scale), Math.round(bitmap.getHeight() * scale), true);
+        float scale = 512.0f / Math.min(bitmap.getWidth(), bitmap.getHeight());
+        Bitmap thumb = resizeBitmap(file.getAbsolutePath(), bitmap, scale);
         ByteArrayOutputStream thumbBytes = new ByteArrayOutputStream();
         if (thumb.compress(Bitmap.CompressFormat.JPEG, 100, thumbBytes)) {
           try (OutputStream thumbOs = new FileOutputStream(thumbFile)) {
@@ -199,4 +196,51 @@ public class Utils {
     }
   }
 
+  private static int getExifOrientation(String src) throws IOException {
+    ExifInterface exif = new ExifInterface(src);
+    return exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+  }
+
+  private static Bitmap resizeBitmap(String src, Bitmap originalBitmap, float scale) {
+    int orientation = 1;
+    try {
+      orientation = getExifOrientation(src);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    Matrix matrix = new Matrix();
+    switch (orientation) {
+      case 2:
+        matrix.setScale(-scale, scale);
+        break;
+      case 3:
+        matrix.postScale(scale, scale);
+        matrix.postRotate(180);
+        break;
+      case 4:
+        matrix.postScale(-scale, scale);
+        matrix.postRotate(180);
+        break;
+      case 5:
+        matrix.postScale(-scale, scale);
+        matrix.postRotate(90);
+        break;
+      case 6:
+        matrix.postScale(scale, scale);
+        matrix.postRotate(90);
+        break;
+      case 7:
+        matrix.postScale(-scale, scale);
+        matrix.postRotate(-90);
+        break;
+      case 8:
+        matrix.postScale(scale, scale);
+        matrix.postRotate(-90);
+        break;
+      default:
+        matrix.setScale(scale, scale);
+        break;
+    }
+    return Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.getWidth(), originalBitmap.getHeight(), matrix, true);
+  }
 }

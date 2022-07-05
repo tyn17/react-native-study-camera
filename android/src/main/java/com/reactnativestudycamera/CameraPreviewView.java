@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -18,7 +17,6 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
-import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
@@ -28,7 +26,6 @@ import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
-import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.LinearLayout;
@@ -327,7 +324,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
         @Override
         public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
           super.onCaptureCompleted(session, request, result);
-          Toast.makeText(context, "Captured a photo", Toast.LENGTH_SHORT).show();
+          //Toast.makeText(context, "Captured a photo", Toast.LENGTH_SHORT).show();
         }
 
         @Override
