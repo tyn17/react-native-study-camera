@@ -55,7 +55,11 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void deleteCaches(String subFolder) {
-    Utils.deleteCaches(getReactApplicationContext(), subFolder);
+    if (subFolder != null && !subFolder.trim().isEmpty()) {
+      Utils.deleteCaches(getReactApplicationContext(), subFolder);
+    } else {
+      Utils.deleteAllCaches(getReactApplicationContext());
+    }
   }
 
   @RequiresApi(api = Build.VERSION_CODES.O)

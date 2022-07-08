@@ -32,6 +32,8 @@ type StudyCameraProps = {
   style: ViewStyle;
   detectionMode: DetectionMode;
   visualMask: boolean;
+  usePortraitScene?: boolean;
+  useBackCamera?: boolean;
   onCaptured: (event: NativeSyntheticEvent<any>) => void;
   onDetected: (event: NativeSyntheticEvent<any>) => void;
 };
@@ -41,6 +43,8 @@ type CameraViewProps = {
   subFolder: String;
   detectionMode?: DetectionMode;
   visualMask?: boolean;
+  usePortraitScene?: boolean;
+  useBackCamera?: boolean;
   style: ViewStyle;
   poseDetectOptions?: PoseDetectOptions;
   onRef?: (ref: CameraView) => void;
@@ -92,6 +96,10 @@ export class CameraView extends Component<CameraViewProps> {
         subFolder={this.props.subFolder}
         detectionMode={this.props.detectionMode || DetectionMode.NONE}
         visualMask={this.props.visualMask || false}
+        usePortraitScene={this.props.usePortraitScene || false}
+        useBackCamera={
+          this.props.useBackCamera == null ? true : this.props.useBackCamera!
+        }
         onCaptured={this.onPhotoCaptured}
         onDetected={this.onPoseDetection}
       />
@@ -148,7 +156,7 @@ export class CameraView extends Component<CameraViewProps> {
    * Delete Cached Files
    * @param subFolder
    */
-  static deleteCachedFiles(subFolder: String) {
+  static deleteCachedFiles(subFolder?: String) {
     StudyCameraModule.deleteCaches(subFolder);
   }
 

@@ -101,6 +101,16 @@ public class Utils {
     }
   }
 
+  /**
+   * Delete all Cached Image Files
+   * @param context
+   */
+  public static void deleteAllCaches(Context context) {
+    String rootPath = getFilesRootFolder(context);
+    File dir = new File(rootPath);
+    deleteDirectory(dir, false);
+  }
+
   @RequiresApi(api = Build.VERSION_CODES.O)
   public static String getCachedImage(Context context, String subFolder, int bodyPart, boolean thumbnail) {
     String imagePath = null;
@@ -133,6 +143,24 @@ public class Utils {
       return dir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(IMAGE_EXTENSION));
     }
     return null;
+  }
+
+  /**
+   * Recursive Delete Directory and all content
+   * @param dir
+   */
+  private static void deleteDirectory(File dir, boolean deleteItSelf) {
+    if (dir.exists()) {
+      File[] files = dir.listFiles();
+      for (File file : files) {
+        if (file.isFile()) {
+          file.delete();
+        } else {
+          deleteDirectory(file, true);
+        }
+      }
+      if (deleteItSelf) dir.delete();
+    }
   }
 
   /**

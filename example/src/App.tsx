@@ -30,22 +30,24 @@ export default function App() {
   const reloadCaches = () => {
     bodyParts.forEach((bp, index) => {
       var count = 0;
-      CameraView.getCachedFile(subjectId, index).then((base64: String) => {
-        count++;
-        bp.image = base64 ? `data:image/png;base64, ${base64}` : '';
-        if (count === 4) {
-          setBodyParts(bodyParts);
-          setBodyPart(0);
-        }
-      }).catch((err) => {
-        console.log(err);
-        bp.image = '';
-        count++;
-        if (count === 4) {
-          setBodyParts(bodyParts);
-          setBodyPart(0);
-        }
-      });
+      CameraView.getCachedFile(subjectId, index, true)
+        .then((base64: String) => {
+          count++;
+          bp.image = base64 ? `data:image/png;base64, ${base64}` : '';
+          if (count === 4) {
+            setBodyParts(bodyParts);
+            setBodyPart(0);
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          bp.image = '';
+          count++;
+          if (count === 4) {
+            setBodyParts(bodyParts);
+            setBodyPart(0);
+          }
+        });
     });
   };
 
@@ -61,7 +63,7 @@ export default function App() {
         style={styles.box}
         bodyPart={bodyPart}
         visualMask={true}
-        detectionMode={DetectionMode.NONE}
+        detectionMode={DetectionMode.POSE}
         subFolder={subjectId}
         onCaptured={(imageBase64) => onCaptured(imageBase64)}
         onPoseVerify={(msgKey) => setMsg(msgKey)}
@@ -82,7 +84,8 @@ export default function App() {
         <View style={styles.buttonContainer}>
           {bodyParts.map((bp, index) => {
             return (
-              <TouchableOpacity key={`bp-${index}`}
+              <TouchableOpacity
+                key={`bp-${index}`}
                 style={
                   bodyPart === index
                     ? [styles.button, styles.selected]

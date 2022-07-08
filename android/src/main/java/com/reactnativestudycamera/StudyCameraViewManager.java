@@ -1,6 +1,9 @@
 package com.reactnativestudycamera;
 
+import android.os.Build;
+
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.common.MapBuilder;
@@ -51,6 +54,17 @@ public class StudyCameraViewManager extends ViewGroupManager<CameraPreviewView> 
   @ReactProp(name = "detectionMode")
   public void setDetectionMode(CameraPreviewView view, int detectionMode) {
     view.setDetectionMode(detectionMode);
+  }
+
+  @ReactProp(name = "usePortraitScene")
+  public void setUsePortraitScene(CameraPreviewView view, boolean usePortraitScene) {
+    view.setUsePortraitScene(usePortraitScene);
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactProp(name = "useBackCamera")
+  public void setUseBackCamera(CameraPreviewView view, boolean useBackCamera) {
+    view.setUseBackCamera(useBackCamera);
   }
 
   @Nullable
