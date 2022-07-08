@@ -140,7 +140,7 @@ export interface PoseDetectOptions {
  * Default Pose Detect Options
  */
 export const defaultOptions: PoseDetectOptions = {
-  minScore: 0.2,
+  minScore: 0.3,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5,
   minShoulderDistance: 0.25,

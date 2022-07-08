@@ -3,7 +3,7 @@ package com.reactnativestudycamera.posedetection.movenet;
 import java.util.List;
 
 public class TensorUtils {
-  public static final float MIN_KEYPOINT_SCORE = .2f;
+  public static final float MIN_KEYPOINT_SCORE = .3f;
 
 
   /**
