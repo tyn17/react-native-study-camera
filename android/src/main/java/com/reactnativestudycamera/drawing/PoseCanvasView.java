@@ -13,14 +13,14 @@ import androidx.annotation.Nullable;
 import com.reactnativestudycamera.posedetection.datamodels.KeyPoint;
 import com.reactnativestudycamera.posedetection.datamodels.PoseResult;
 import com.reactnativestudycamera.posedetection.movenet.BodyPart;
+import com.reactnativestudycamera.posedetection.movenet.TensorUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class PoseCanvasView extends View {
   /** Pair of keyPoints to draw lines between.  */
-  private List<Pair<BodyPart, BodyPart>> bodyJoints = Arrays.asList(
+  private List<Pair> bodyJoints = Arrays.asList(
     new Pair(BodyPart.NOSE, BodyPart.LEFT_EYE),
     new Pair(BodyPart.NOSE, BodyPart.RIGHT_EYE),
     new Pair(BodyPart.LEFT_EYE, BodyPart.LEFT_EAR),
@@ -75,7 +75,7 @@ public class PoseCanvasView extends View {
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
-    if (paint != null && pose != null) {
+    if (paint != null && pose != null && pose.getScore() > TensorUtils.MIN_KEYPOINT_SCORE) {
       float w = 1.0f * getWidth();
       float h = 1.0f * getHeight();
 

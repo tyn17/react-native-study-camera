@@ -129,7 +129,7 @@ public class PoseMoveNetDetector implements PoseDetector {
     int width = bitmap.getWidth();
     int height = bitmap.getHeight();
 
-    int size = Math.max(height, width);
+    //int size = Math.max(height, width);
     ImageProcessor imageProcessor = new ImageProcessor.Builder()//.add(new ResizeWithCropOrPadOp(size, size))
       .add(new ResizeOp(inputHeight, inputWidth, ResizeOp.ResizeMethod.BILINEAR)).build();
     TensorImage tensorImage = new TensorImage(DataType.UINT8);

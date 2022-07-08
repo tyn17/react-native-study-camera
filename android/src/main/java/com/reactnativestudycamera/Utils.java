@@ -112,7 +112,7 @@ public class Utils {
   }
 
   @RequiresApi(api = Build.VERSION_CODES.O)
-  public static String getCachedImage(Context context, String subFolder, int bodyPart, boolean thumbnail) {
+  public static String getCachedImage(Context context, String subFolder, int bodyPart, boolean thumbnail, boolean returnFilePath) {
     String imagePath = null;
     if (thumbnail) {
       imagePath = getFilesRootFolder(context) + File.separator + subFolder + File.separator + bodyPart + THUMB_EXTENSION;
@@ -125,6 +125,7 @@ public class Utils {
     File file = new File(imagePath);
     Log.d("GET IMAGE", file.getAbsolutePath());
     if (file.exists() && file.isFile()) {
+      if (returnFilePath) return file.getAbsolutePath();
       try {
         byte[] bytes = Files.readAllBytes(file.toPath());
         return base64Image(bytes);

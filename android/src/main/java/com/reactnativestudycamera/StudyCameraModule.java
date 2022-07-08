@@ -67,9 +67,25 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
   public void getCachedFile(String subFolder, int bodyPart, boolean isThumb, Promise promise) {
     try {
       Log.d("CACHE FILE", "Begin get cache file " + bodyPart + " of " + subFolder);
-      String imageBase64 = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart, isThumb);
+      String imageBase64 = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart, isThumb, false);
       if (imageBase64 != null) {
         promise.resolve(imageBase64);
+        return;
+      }
+      promise.reject("NOT_FOUND", "File not found");
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      promise.reject("ERROR", ex.getMessage());
+    }
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.O)
+  @ReactMethod
+  public void getCachedFilePath(String subFolder, int bodyPart, boolean isThumb, Promise promise) {
+    try {
+      String filePath = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart, isThumb, true);
+      if (filePath != null && !filePath.trim().isEmpty()) {
+        promise.resolve(filePath);
         return;
       }
       promise.reject("NOT_FOUND", "File not found");

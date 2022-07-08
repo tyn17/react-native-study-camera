@@ -171,4 +171,16 @@ export class CameraView extends Component<CameraViewProps> {
       isThumbnail
     );
   }
+
+  static async getCachedFilePath(
+    subFolder: String,
+    bodyPart: number,
+    isThumbnail: boolean
+  ) {
+    return await StudyCameraModule.getCachedFilePath(
+      subFolder,
+      bodyPart,
+      isThumbnail
+    );
+  }
 }
