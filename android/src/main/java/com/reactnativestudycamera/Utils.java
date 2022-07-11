@@ -14,17 +14,34 @@ import android.util.Size;
 
 import androidx.annotation.RequiresApi;
 
+import com.reactnativestudycamera.encrypt.EncryptUtils;
+import com.reactnativestudycamera.encrypt.EncryptedModel;
+
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Base64;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 public class Utils {
-  private static final String IMAGE_EXTENSION = ".JPG";
-  private static final String THUMB_EXTENSION = "_thumbnail.JPG";
+  private static final boolean ENCRYPT_IMAGE = true;
+  private static final String IMAGE_EXTENSION = ENCRYPT_IMAGE ? ".EJPG" : ".JPG";
+  private static final String THUMB_EXTENSION = ENCRYPT_IMAGE ? "_thumbnail.EJPG" : "_thumbnail.JPG";
+  private static final String KEY_FILE_EXTENSION = ".enc";
+
   /**
    * Get Root Folder
    * @param context
@@ -53,10 +70,18 @@ public class Utils {
    * @param withThumb
    * @throws IOException
    */
-  public static byte[] save(File file, byte[] bytes, boolean withThumb) throws IOException {
+  @RequiresApi(api = Build.VERSION_CODES.O)
+  public static byte[] save(File file, byte[] bytes, boolean withThumb) throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, InvalidKeySpecException, BadPaddingException, InvalidKeyException {
     byte[] result = bytes;
     try (OutputStream output = new FileOutputStream(file)) {
-      output.write(bytes);
+      if (ENCRYPT_IMAGE) {
+        EncryptedModel encrypted = EncryptUtils.encrypt(bytes);
+        output.write(encrypted.getEncryptedData());
+        //Write key
+        writeKeyFile(file.getAbsolutePath(), encrypted.getEncryptedKeyBase64());
+      } else {
+        output.write(bytes);
+      }
     }
     if (withThumb) {
 
@@ -66,12 +91,19 @@ public class Utils {
       if (thumbFile.createNewFile()) {
         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         float scale = 512.0f / Math.min(bitmap.getWidth(), bitmap.getHeight());
-        Bitmap thumb = resizeBitmap(file.getAbsolutePath(), bitmap, scale);
+        Bitmap thumb = resizeBitmap(bytes, bitmap, scale);
         ByteArrayOutputStream thumbBytes = new ByteArrayOutputStream();
         if (thumb.compress(Bitmap.CompressFormat.JPEG, 100, thumbBytes)) {
           try (OutputStream thumbOs = new FileOutputStream(thumbFile)) {
             result = thumbBytes.toByteArray();
-            thumbOs.write(result);
+            if (ENCRYPT_IMAGE) {
+              EncryptedModel encryptedThumb = EncryptUtils.encrypt(result);
+              thumbOs.write(encryptedThumb.getEncryptedData());
+              //Write key
+              writeKeyFile(file.getAbsolutePath(), encryptedThumb.getEncryptedKeyBase64());
+            } else {
+              thumbOs.write(result);
+            }
           }
         }
         thumbBytes.close();
@@ -128,8 +160,12 @@ public class Utils {
       if (returnFilePath) return file.getAbsolutePath();
       try {
         byte[] bytes = Files.readAllBytes(file.toPath());
-        return base64Image(bytes);
-      } catch (IOException e) {
+        if (ENCRYPT_IMAGE) {
+          String keyBase64 = readKeyFile(imagePath);
+          bytes = EncryptUtils.decrypt(bytes, keyBase64);
+        }
+        return EncryptUtils.toBase64(bytes);
+      } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeySpecException | BadPaddingException | InvalidKeyException e) {
         e.printStackTrace();
         return null;
       }
@@ -141,7 +177,7 @@ public class Utils {
     String dirPath = getFilesRootFolder(context) + File.separator + subFolder;
     File dir = new File(dirPath);
     if (dir.exists()) {
-      return dir.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(IMAGE_EXTENSION));
+      return dir.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(IMAGE_EXTENSION) || pathname.getName().endsWith(KEY_FILE_EXTENSION)));
     }
     return null;
   }
@@ -165,14 +201,29 @@ public class Utils {
   }
 
   /**
-   * Encode Image data to Base64
-   * @param bytes
-   * @return
+   * Write Key File
+   * @param imageFilePath
+   * @param key
+   * @throws IOException
    */
+  private static void writeKeyFile(String imageFilePath, String key) throws IOException {
+    File keyFile = new File(imageFilePath + KEY_FILE_EXTENSION);
+    if (keyFile.exists() && keyFile.delete());
+    if (keyFile.createNewFile()) {
+      try (FileWriter writer = new FileWriter(keyFile)) {
+          writer.write(key);
+      }
+    }
+  }
+
   @RequiresApi(api = Build.VERSION_CODES.O)
-  public static String base64Image(byte[] bytes) {
-    byte[] encoded = Base64.getEncoder().encode(bytes);
-    return new String(encoded);
+  private static String readKeyFile(String imageFilePath) throws IOException {
+    File keyFile = new File(imageFilePath + KEY_FILE_EXTENSION);
+    if (keyFile.exists()) {
+      byte[] bytes = Files.readAllBytes(keyFile.toPath());
+      return new String(bytes, StandardCharsets.UTF_8);
+    }
+    return null;
   }
 
   /**
@@ -225,15 +276,19 @@ public class Utils {
     }
   }
 
-  private static int getExifOrientation(String src) throws IOException {
-    ExifInterface exif = new ExifInterface(src);
+  @RequiresApi(api = Build.VERSION_CODES.N)
+  private static int getExifOrientation(byte[] bytes) throws IOException {
+    InputStream istream = new ByteArrayInputStream(bytes);
+    ExifInterface exif = new ExifInterface(istream);
+    istream.close();
     return exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
   }
 
-  private static Bitmap resizeBitmap(String src, Bitmap originalBitmap, float scale) {
+  @RequiresApi(api = Build.VERSION_CODES.N)
+  private static Bitmap resizeBitmap(byte[] bytes, Bitmap originalBitmap, float scale) {
     int orientation = 1;
     try {
-      orientation = getExifOrientation(src);
+      orientation = getExifOrientation(bytes);
     } catch (Exception ex) {
       ex.printStackTrace();
     }
