@@ -100,7 +100,7 @@ public class Utils {
               EncryptedModel encryptedThumb = EncryptUtils.encrypt(result);
               thumbOs.write(encryptedThumb.getEncryptedData());
               //Write key
-              writeKeyFile(file.getAbsolutePath(), encryptedThumb.getEncryptedKeyBase64());
+              writeKeyFile(thumbPath, encryptedThumb.getEncryptedKeyBase64());
             } else {
               thumbOs.write(result);
             }
