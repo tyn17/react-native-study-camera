@@ -94,4 +94,15 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
       promise.reject("ERROR", ex.getMessage());
     }
   }
+
+  @ReactMethod
+  public void hasCachedFiles(boolean onlyCheckOrigin, Promise promise) {
+    try {
+      boolean hasCached = Utils.hasCachedFiles(getReactApplicationContext(), onlyCheckOrigin);
+      promise.resolve(hasCached);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      promise.reject("ERROR", ex.getMessage());
+    }
+  }
 }

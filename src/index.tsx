@@ -160,6 +160,13 @@ export class CameraView extends Component<CameraViewProps> {
     StudyCameraModule.deleteCaches(subFolder);
   }
 
+  /**
+   * Get Cached File
+   * @param subFolder
+   * @param bodyPart
+   * @param isThumbnail
+   * @returns
+   */
   static async getCachedFile(
     subFolder: String,
     bodyPart: number,
@@ -172,6 +179,13 @@ export class CameraView extends Component<CameraViewProps> {
     );
   }
 
+  /**
+   * Get Cached File Path
+   * @param subFolder
+   * @param bodyPart
+   * @param isThumbnail
+   * @returns
+   */
   static async getCachedFilePath(
     subFolder: String,
     bodyPart: number,
@@ -182,5 +196,13 @@ export class CameraView extends Component<CameraViewProps> {
       bodyPart,
       isThumbnail
     );
+  }
+
+  /**
+   * Check Has Cached Files
+   * @returns
+   */
+  static async hasCachedFiles() {
+    return await StudyCameraModule.hasCachedFiles(true);
   }
 }

@@ -173,6 +173,28 @@ public class Utils {
     return null;
   }
 
+  public static boolean hasCachedFiles(Context context, boolean onlyCheckOrigin) {
+    String dirPath = getFilesRootFolder(context);
+    File dir = new File(dirPath);
+    if (dir.exists()) {
+      File[] subFolders = dir.listFiles(File::isDirectory);
+      if (subFolders != null && subFolders.length > 0) {
+        for (File subFolder : subFolders) {
+          File[] files = null;
+          if (onlyCheckOrigin) {
+            files = subFolder.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(IMAGE_EXTENSION)));
+          } else {
+            files = subFolder.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(IMAGE_EXTENSION) || pathname.getName().endsWith(THUMB_EXTENSION)));
+          }
+          if (files != null && files.length > 0) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   private static File[] getFilesInFolder(Context context, String subFolder) {
     String dirPath = getFilesRootFolder(context) + File.separator + subFolder;
     File dir = new File(dirPath);
