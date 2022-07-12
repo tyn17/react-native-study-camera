@@ -6,13 +6,6 @@
 	objectVersion = 46;
 	objects = {
 
-/* Begin PBXBuildFile section */
-
-		5E555C0D2413F4C50049A1A2 /* StudyCamera.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* StudyCamera.m */; };
-		F4FF95D7245B92E800C19C63 /*  StudyCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4FF95D6245B92E800C19C63 /*  StudyCamera.swift */; };
-
-/* End PBXBuildFile section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		58B511D91A9E6C8500147676 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -27,11 +20,12 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libStudyCamera.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libStudyCamera.a; sourceTree = BUILT_PRODUCTS_DIR; };
-
-		B3E7B5891CC2AC0600A0062D /* StudyCamera.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StudyCamera.m; sourceTree = "<group>"; };
+		6D10E81D287DC68900119DFC /* StudyCameraViewManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StudyCameraViewManager.m; sourceTree = "<group>"; };
+		6D10E81E287DC68900119DFC /* StudyCameraViewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyCameraViewManager.swift; sourceTree = "<group>"; };
+		6D10E81F287DCD7300119DFC /* StudyCameraModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyCameraModule.swift; sourceTree = "<group>"; };
+		6D10E820287DCF9F00119DFC /* StudyCameraModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StudyCameraModule.m; sourceTree = "<group>"; };
+		6D10E821287DE44200119DFC /* DetectionMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DetectionMode.swift; path = consts/DetectionMode.swift; sourceTree = "<group>"; };
 		F4FF95D5245B92E700C19C63 /* StudyCamera-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "StudyCamera-Bridging-Header.h"; sourceTree = "<group>"; };
-		F4FF95D6245B92E800C19C63 /* StudyCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyCamera.swift; sourceTree = "<group>"; };
-
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,11 +50,12 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
-
-				F4FF95D6245B92E800C19C63 /* StudyCamera.swift */,
-				B3E7B5891CC2AC0600A0062D /* StudyCamera.m */,
+				6D10E821287DE44200119DFC /* DetectionMode.swift */,
+				6D10E820287DCF9F00119DFC /* StudyCameraModule.m */,
+				6D10E81F287DCD7300119DFC /* StudyCameraModule.swift */,
+				6D10E81D287DC68900119DFC /* StudyCameraViewManager.m */,
+				6D10E81E287DC68900119DFC /* StudyCameraViewManager.swift */,
 				F4FF95D5245B92E700C19C63 /* StudyCamera-Bridging-Header.h */,
-
 				134814211AA4EA7D00B7C361 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -122,10 +117,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-
-				F4FF95D7245B92E800C19C63 /* StudyCamera.swift in Sources */,
-				B3E7B58A1CC2AC0600A0062D /* StudyCamera.m in Sources */,
-
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,11 +229,9 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = StudyCamera;
 				SKIP_INSTALL = YES;
-
 				SWIFT_OBJC_BRIDGING_HEADER = "StudyCamera-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-
 			};
 			name = Debug;
 		};
@@ -259,10 +248,8 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = StudyCamera;
 				SKIP_INSTALL = YES;
-
 				SWIFT_OBJC_BRIDGING_HEADER = "StudyCamera-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-
 			};
 			name = Release;
 		};
