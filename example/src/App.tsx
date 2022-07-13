@@ -1,21 +1,72 @@
 import * as React from 'react';
 
-import { Button, Dimensions, StyleSheet, View } from 'react-native';
-import { CameraView } from 'react-native-study-camera';
+import {
+  Button,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { CameraView, DetectionMode } from 'react-native-study-camera';
 
 export default function App() {
-  const cameraRef = React.useRef<CameraView>(null);
+  const subjectId = 'test01';
+  const [bodyParts, setBodyParts] = React.useState([
+    { image: '', label: 'Upper Front' },
+    { image: '', label: 'Upper Back' },
+    { image: '', label: 'Lower Front' },
+    { image: '', label: 'Lower Back' },
+  ]);
+  const [bodyPart, setBodyPart] = React.useState(0);
+  const [msg, setMsg] = React.useState('Message here');
+  const cameraRef = React.useRef<CameraView | null>(null);
   const onCaptured = (imageBase64: String) => {
-    console.error(imageBase64);
+    bodyParts[bodyPart].image = `data:image/png;base64, ${imageBase64}`;
+    setBodyPart((bodyPart + 1) % bodyParts.length);
+    setBodyParts(bodyParts);
   };
+  const reloadCaches = () => {
+    bodyParts.forEach((bp, index) => {
+      var count = 0;
+      CameraView.getCachedFile(subjectId, index, true)
+        .then((base64: String) => {
+          count++;
+          bp.image = base64 ? `data:image/png;base64, ${base64}` : '';
+          if (count === 4) {
+            setBodyParts(bodyParts);
+            setBodyPart(0);
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          bp.image = '';
+          count++;
+          if (count === 4) {
+            setBodyParts(bodyParts);
+            setBodyPart(0);
+          }
+        });
+    });
+  };
+
+  React.useEffect(() => {
+    reloadCaches();
+  }, []);
+
   const captureTop = (Dimensions.get('window').width * 4) / 3 - 50;
   return (
     <View style={styles.container}>
       <CameraView
         onRef={(ref) => (cameraRef.current = ref)}
         style={styles.box}
-        bodyPart={-1}
-        onCaptured={(event) => onCaptured(event.nativeEvent.imageBase64)}
+        bodyPart={bodyPart}
+        visualMask={true}
+        detectionMode={DetectionMode.POSE}
+        subFolder={subjectId}
+        onCaptured={(imageBase64) => onCaptured(imageBase64)}
+        onPoseVerify={(msgKey) => setMsg(msgKey)}
       />
       <View style={[styles.buttons, { top: captureTop }]}>
         <Button
@@ -23,7 +74,38 @@ export default function App() {
           title="Capture"
           disabled={false}
           onPress={() => {
-            cameraRef.current.capturePhoto();
+            cameraRef.current!.capturePhoto();
+          }}
+        />
+      </View>
+      <View style={styles.bottomContainer}>
+        <Text>{bodyParts[bodyPart].label.toUpperCase()}</Text>
+        <Text>{msg}</Text>
+        <View style={styles.buttonContainer}>
+          {bodyParts.map((bp, index) => {
+            return (
+              <TouchableOpacity
+                key={`bp-${index}`}
+                style={
+                  bodyPart === index
+                    ? [styles.button, styles.selected]
+                    : [styles.button, styles.unselected]
+                }
+                onPress={() => setBodyPart(index)}
+              >
+                {bp.image.length > 0 && (
+                  <Image width={50} height={50} source={{ uri: bp.image }} />
+                )}
+                {!bp.image && <Text>{bp.label}</Text>}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <Button
+          title="Delete cache"
+          onPress={() => {
+            CameraView.deleteCachedFiles(subjectId);
+            reloadCaches();
           }}
         />
       </View>
@@ -45,5 +127,30 @@ const styles = StyleSheet.create({
   buttons: {
     position: 'absolute',
     zIndex: 999,
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 50,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+  },
+  unselected: {
+    backgroundColor: '#aaa',
+  },
+  selected: {
+    backgroundColor: 'green',
   },
 });

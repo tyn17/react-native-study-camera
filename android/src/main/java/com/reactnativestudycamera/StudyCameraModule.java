@@ -1,10 +1,17 @@
 package com.reactnativestudycamera;
 
-import androidx.annotation.NonNull;
+import android.os.Build;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+
+import java.util.List;
 
 public class StudyCameraModule extends ReactContextBaseJavaModule {
   private StudyCameraViewManager cameraViewManager;
@@ -24,6 +31,7 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
     return true;
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.M)
   @ReactMethod
   public void resumeCamera() {
     if (cameraViewManager.getCameraPreviewView() != null) {
@@ -42,6 +50,59 @@ public class StudyCameraModule extends ReactContextBaseJavaModule {
   public void capturePhoto() {
     if (cameraViewManager.getCameraPreviewView() != null) {
       cameraViewManager.getCameraPreviewView().capturePhoto();
+    }
+  }
+
+  @ReactMethod
+  public void deleteCaches(String subFolder) {
+    if (subFolder != null && !subFolder.trim().isEmpty()) {
+      Utils.deleteCaches(getReactApplicationContext(), subFolder);
+    } else {
+      Utils.deleteAllCaches(getReactApplicationContext());
+    }
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.O)
+  @ReactMethod
+  public void getCachedFile(String subFolder, int bodyPart, boolean isThumb, Promise promise) {
+    try {
+      Log.d("CACHE FILE", "Begin get cache file " + bodyPart + " of " + subFolder);
+      String imageBase64 = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart, isThumb, false);
+      if (imageBase64 != null) {
+        promise.resolve(imageBase64);
+        return;
+      }
+      promise.reject("NOT_FOUND", "File not found");
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      promise.reject("ERROR", ex.getMessage());
+    }
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.O)
+  @ReactMethod
+  public void getCachedFilePath(String subFolder, int bodyPart, boolean isThumb, Promise promise) {
+    try {
+      String filePath = Utils.getCachedImage(getReactApplicationContext(), subFolder, bodyPart, isThumb, true);
+      if (filePath != null && !filePath.trim().isEmpty()) {
+        promise.resolve(filePath);
+        return;
+      }
+      promise.reject("NOT_FOUND", "File not found");
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      promise.reject("ERROR", ex.getMessage());
+    }
+  }
+
+  @ReactMethod
+  public void hasCachedFiles(boolean onlyCheckOrigin, Promise promise) {
+    try {
+      boolean hasCached = Utils.hasCachedFiles(getReactApplicationContext(), onlyCheckOrigin);
+      promise.resolve(hasCached);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      promise.reject("ERROR", ex.getMessage());
     }
   }
 }

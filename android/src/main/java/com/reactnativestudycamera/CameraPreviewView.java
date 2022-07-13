@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -19,8 +20,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
-import android.media.MediaScannerConnection;
-import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
@@ -28,24 +28,38 @@ import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
+import com.reactnativestudycamera.consts.DetectionMode;
+import com.reactnativestudycamera.drawing.PoseCanvasView;
+import com.reactnativestudycamera.encrypt.EncryptUtils;
+import com.reactnativestudycamera.posedetection.FrameHandler;
+import com.reactnativestudycamera.posedetection.datamodels.PoseResult;
+import com.reactnativestudycamera.posedetection.intefaces.FrameHandlerListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 
-public class CameraPreviewView extends LinearLayout implements TextureView.SurfaceTextureListener {
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
+public class CameraPreviewView extends LinearLayout implements TextureView.SurfaceTextureListener, FrameHandlerListener {
   static int REQUEST_CAMERA_PERMISSION = 200;
   static final SparseIntArray ORIENTATIONS = new SparseIntArray();
   static {
@@ -60,7 +74,12 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   private int state = STATE_PREVIEW;
 
   private ThemedReactContext context;
+  private String subFolder;
   private int bodyPart;
+  private boolean visualMask;
+  private int detectionMode;
+  private boolean usePortraitScene = false;
+  private boolean useBackCamera = true;
 
   private TextureView textureView;
   private Size previewSize;
@@ -72,6 +91,8 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   private HandlerThread backgroundThread;
   private Handler backgroundHandler;
+  private FrameHandler frameHandler;
+  private PoseCanvasView maskView;
 
   public CameraPreviewView(ThemedReactContext context) {
     super(context);
@@ -81,8 +102,10 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   private void initialize() {
     inflate(this.context, R.layout.camera_preview, this);
-    textureView = (TextureView) findViewById(R.id.textureView);
+    textureView = findViewById(R.id.textureView);
     textureView.setSurfaceTextureListener(this);
+
+    maskView = findViewById(R.id.maskView);
     startBackgroundThread();
   }
 
@@ -90,18 +113,53 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     this.bodyPart = bodyPart;
   }
 
+  public void setSubFolder(String subFolder) {
+    this.subFolder = subFolder;
+  }
+
+  public void setVisualMask(boolean visualMask) {
+    this.visualMask = visualMask;
+    maskView.setVisibility(visualMask ? VISIBLE : GONE);
+  }
+
+  public void setDetectionMode(int detectionMode) {
+    this.detectionMode = detectionMode;
+    if (detectionMode == DetectionMode.NONE) {
+      disableDetection();
+    } else {
+      enableDetection();
+    }
+  }
+
+  public void setUsePortraitScene(boolean usePortraitScene) {
+    this.usePortraitScene = usePortraitScene;
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  public void setUseBackCamera(boolean useBackCamera) {
+    if (useBackCamera != this.useBackCamera) {
+      this.useBackCamera = useBackCamera;
+      closeCamera();
+      setupCamera();
+      openCamera();
+    }
+  }
+
   //Setup Camera
+  @RequiresApi(api = Build.VERSION_CODES.M)
   void setupCamera() {
     CameraManager cameraManager = (CameraManager) context.getCurrentActivity().getSystemService(Context.CAMERA_SERVICE);
     try {
       Size imageSize = new Size(640, 480);
       for (String id : cameraManager.getCameraIdList()) {
         CameraCharacteristics cameraCharacteristics = cameraManager.getCameraCharacteristics(id);
-        if (cameraCharacteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
+        if (useBackCamera && cameraCharacteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
+          continue;
+        }
+        if (!useBackCamera && cameraCharacteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK) {
           continue;
         }
         StreamConfigurationMap map = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-
         Size mSize = Utils.getSizeByRatio(map, ASPECT_RATIO, false);
         if (imageSize.getWidth() < mSize.getWidth()) {
           previewSize = Utils.getSizeByRatio(map, ASPECT_RATIO, true);
@@ -235,25 +293,21 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   };
 
   final private ImageReader.OnImageAvailableListener onImageAvailableListener = new ImageReader.OnImageAvailableListener() {
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onImageAvailable(ImageReader reader) {
-      File file = Utils.createNewImageFile();
+      File file = Utils.createNewImageFile(context, subFolder, "" + bodyPart);
       try (Image image = reader.acquireLatestImage()) {
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
-        Utils.save(file, bytes);
-        MediaScannerConnection.scanFile(context, new String[]{file.getAbsolutePath()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-          @Override
-          public void onScanCompleted(String path, Uri uri) {
-          }
-        });
+        Utils.save(file, bytes, true);
 
         //Return Image to React-Native
         WritableMap event = Arguments.createMap();
-        event.putString("imageBase64", Utils.base64Image(bytes));
-        context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "capturedPhotoEvent", event);
-      } catch (IOException e) {
+        event.putString("imageBase64", EncryptUtils.toBase64(bytes));
+        sendEvent("capturedPhotoEvent", event);
+      } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeySpecException | BadPaddingException | InvalidKeyException e) {
         e.printStackTrace();
       }
     }
@@ -267,11 +321,18 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     {
       final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
       captureBuilder.addTarget(imageReader.getSurface());
+
       captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
       captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO);
       captureBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_AUTO);
-      captureBuilder.set(CaptureRequest.JPEG_QUALITY, (byte) 100);
       captureBuilder.set(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_TORCH);
+      captureBuilder.set(CaptureRequest.JPEG_QUALITY, (byte) 100);
+
+      //Set Scene
+      if (usePortraitScene) {
+        captureBuilder.set(CaptureRequest.CONTROL_SCENE_MODE, CameraMetadata.CONTROL_SCENE_MODE_PORTRAIT);
+        captureBuilder.set(CaptureRequest.LENS_FILTER_DENSITY, 0f);
+      }
 
       // Orientation
       int rotation = context.getCurrentActivity().getWindowManager().getDefaultDisplay().getRotation();
@@ -324,6 +385,28 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     }
   }
 
+  //Enable Detection
+  private void enableDetection() {
+    if (frameHandler == null) frameHandler = new FrameHandler(this);
+    try {
+      frameHandler.startDetector(context.getApplicationContext());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  //Disable Detection
+  private void disableDetection() {
+    if (frameHandler != null) {
+      try {
+        frameHandler.stopDetector();
+        frameHandler = null;
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
   //Start Background Thread
   private void startBackgroundThread() {
     Log.d("STUDY-CAMERA", "Start Background Thread");
@@ -332,6 +415,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
       backgroundThread.start();
       backgroundHandler = new Handler(backgroundThread.getLooper());
     }
+    enableDetection();
   }
 
   //Stop Background Thread
@@ -347,22 +431,26 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
         ex.printStackTrace();
       }
     }
+    disableDetection();
+  }
+
+  //Send Event to Js
+  private void sendEvent(String eventName, WritableMap event) {
+    context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), eventName, event);
   }
   //----PUBLIC METHODS------
   // Call Take Picture
   public void capturePhoto() {
     Log.d("STUDY-CAMERA", "Call Capture Photo");
     if (this.bodyPart < 0) {
-      //TEST MODE - return hardcode image
-      WritableMap event = Arguments.createMap();
-      event.putString("imageBase64", Constants.demoImage);
-      context.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "capturedPhotoEvent", event);
       return;
     }
     //The photo will be captured on Lock Focus Callback
     lockFocus();
   }
+
   // Theses should be called when change React-Native Activity Lifecycle
+  @RequiresApi(api = Build.VERSION_CODES.M)
   public void resume() {
     startBackgroundThread();
     textureView.setSurfaceTextureListener(this);
@@ -378,6 +466,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
   //----END PUBLIC METHODS------
 
   //-------TextureView.SurfaceTextureListener--------
+  @RequiresApi(api = Build.VERSION_CODES.M)
   @Override
   public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
     setupCamera();
@@ -396,7 +485,21 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
   @Override
   public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+    if (detectionMode == DetectionMode.NONE || frameHandler == null || frameHandler.isProcessing()) return;
+    Bitmap photo = textureView.getBitmap();
+    frameHandler.processBitmap(photo);
   }
   //-----End TextureView.SurfaceTextureListener------
+  //-----FrameHandleListener------
+  @Override
+  public void onResult(PoseResult result) {
+    //Log.d("POSING", result.toString());
+    WritableMap event = Arguments.createMap();
+    event.putString("pose", result.serialize());
+    sendEvent("detectionEvent", event);
+    if (maskView != null && visualMask) {
+      maskView.drawPose(result);
+    }
+  }
+  //-----End FrameHandleListener------
 }
