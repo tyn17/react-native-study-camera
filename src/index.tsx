@@ -53,8 +53,8 @@ type CameraViewProps = {
 };
 
 const ComponentName = 'StudyCameraView';
-const { StudyCameraModule } = NativeModules;
-
+const StudyCameraModule = NativeModules.StudyCameraModule;
+const studyCameraManager = Platform.OS === 'ios' ? NativeModules.StudyCameraViewManager : NativeModules.StudyCameraModule;
 const StudyCameraView =
   UIManager.getViewManagerConfig(ComponentName) != null
     ? requireNativeComponent<StudyCameraProps>(ComponentName)
@@ -77,12 +77,12 @@ export class CameraView extends Component<CameraViewProps> {
       this.appState.match(/inactive|background/) &&
       nextAppState === 'active'
     ) {
-      StudyCameraModule.resumeCamera();
+      studyCameraManager.resumeCamera();
     } else if (
       this.appState.match(/active/) &&
       nextAppState.match(/inactive|background/)
     ) {
-      StudyCameraModule.pauseCamera();
+      studyCameraManager.pauseCamera();
     }
 
     this.appState = nextAppState;
@@ -130,7 +130,7 @@ export class CameraView extends Component<CameraViewProps> {
     if (this.props.onRef) {
       this.props.onRef(this);
     }
-    StudyCameraModule.resumeCamera();
+    studyCameraManager.resumeCamera();
 
     this.appStateSubscription = AppState.addEventListener(
       'change',
@@ -139,7 +139,7 @@ export class CameraView extends Component<CameraViewProps> {
   }
 
   componentWillUnmount() {
-    StudyCameraModule.pauseCamera();
+    studyCameraManager.pauseCamera();
     if (this.appStateSubscription && this.appStateSubscription.remove) {
       this.appStateSubscription.remove();
     } else {
@@ -149,7 +149,7 @@ export class CameraView extends Component<CameraViewProps> {
 
   //Call capture photo
   capturePhoto() {
-    StudyCameraModule.capturePhoto();
+    studyCameraManager.capturePhoto();
   }
 
   /**

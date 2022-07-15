@@ -8,20 +8,6 @@
 
 @objc(StudyCameraModule)
 class StudyCameraModule: NSObject {
-    @objc(resumeCamera)
-    func resumeCamera() -> Void {
-        print("Resume Camera")
-    }
-    
-    @objc(pauseCamera)
-    func pauseCamera() -> Void {
-        print("Pause Camera")
-    }
-    
-    @objc(capturePhoto)
-    func capturePhoto() -> Void {
-        print("Capture Photo")
-    }
     
     @objc(deleteCaches:)
     func deleteCaches(_ subFolder: String) -> Void {
@@ -41,5 +27,9 @@ class StudyCameraModule: NSObject {
     @objc(hasCachedFiles:resolver:rejecter:)
     func hasCachedFiles(_ onlyCheckOrigin: Bool, _ resolver: RCTPromiseResolveBlock, _ rejecter: RCTPromiseRejectBlock) -> Void {
         resolver(false)
+    }
+    
+    @objc class func requiresMainQueueSetup() -> Bool {
+        return true
     }
 }

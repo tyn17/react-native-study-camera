@@ -6,7 +6,9 @@
 //  Copyright © 2022 Facebook. All rights reserved.
 //
 
-enum DetectionMode: Int {
-    case NONE = 0
-    case POSE = 1
+class Constants {
+    public enum DetectionMode: Int {
+        case NONE = 0
+        case POSE = 1
+    }
 }
