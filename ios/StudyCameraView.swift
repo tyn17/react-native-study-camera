@@ -22,8 +22,8 @@ class StudyCameraView : UIView, AVCapturePhotoCaptureDelegate {
             switchCamera()
         }
     }
-//    @objc var onCaptured: RCTBubblingEventBlock? = nil
-//    @objc var onDetected: RCTBubblingEventBlock? = nil
+    @objc var onCaptured: RCTBubblingEventBlock? = nil
+    @objc var onDetected: RCTBubblingEventBlock? = nil
     
     // Inside variables
     var textureView: UIView!
@@ -154,9 +154,16 @@ class StudyCameraView : UIView, AVCapturePhotoCaptureDelegate {
     
     //DELEGATE
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard let imageData = photo.fileDataRepresentation()
+        guard let imageData = photo.fileDataRepresentation(), let onCallback = onCaptured
         else {return}
-        
+        //Save image
+        do {
+            let rsData = try Utils.save(subFolder: subFolder, fileName: "\(bodyPart)", data: imageData, withThumb: true)
+            let base64 = rsData.base64EncodedString()
+            onCallback(["imageBase64": base64])
+        } catch let err {
+            print(err)
+        }
     }
     
     // Resume Camera

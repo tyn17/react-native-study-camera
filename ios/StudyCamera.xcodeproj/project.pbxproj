@@ -29,6 +29,8 @@
 		6D10E81E287DC68900119DFC /* StudyCameraViewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyCameraViewManager.swift; sourceTree = "<group>"; };
 		6D10E81F287DCD7300119DFC /* StudyCameraModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyCameraModule.swift; sourceTree = "<group>"; };
 		6D10E820287DCF9F00119DFC /* StudyCameraModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StudyCameraModule.m; sourceTree = "<group>"; };
+		6D9DEE9728817E01007C3967 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		6D9E5A202887C28900921511 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		6D9EC665287E9C6600FD768B /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		6D9EC668287E9CB500FD768B /* StudyCameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyCameraView.swift; sourceTree = "<group>"; };
 		F4FF95D5245B92E700C19C63 /* StudyCamera-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "StudyCamera-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -56,6 +58,8 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				6D9E5A202887C28900921511 /* KeychainManager.swift */,
+				6D9DEE9728817E01007C3967 /* Utils.swift */,
 				6D10E820287DCF9F00119DFC /* StudyCameraModule.m */,
 				6D9EC665287E9C6600FD768B /* Constants.swift */,
 				6D9EC668287E9CB500FD768B /* StudyCameraView.swift */,

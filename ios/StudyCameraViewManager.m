@@ -14,9 +14,9 @@ RCT_EXPORT_VIEW_PROPERTY(usePortraitScene, BOOL)
 
 RCT_EXPORT_VIEW_PROPERTY(useBackCamera, BOOL)
 
-//RCT_EXPORT_VIEW_PROPERTY(onCaptured, RCTBubblingEventBlock*)
-//
-//RCT_EXPORT_VIEW_PROPERTY(onDetected, RCTBubblingEventBlock*)
+RCT_EXPORT_VIEW_PROPERTY(onCaptured, RCTBubblingEventBlock)
+
+RCT_EXPORT_VIEW_PROPERTY(onDetected, RCTBubblingEventBlock)
 
 RCT_EXTERN_METHOD(resumeCamera)
 
