@@ -10,7 +10,8 @@ import Foundation
 
 class Utils {
     // MARK: Constants
-    private static let ENCRYPT_IMAGE = false
+    private static let ENCRYPT_IMAGE = true
+    private static let KEY_TAG = "com.belle.torus.study"
     private static let IMAGE_EXTENSION = ENCRYPT_IMAGE ? ".EJPG" : ".JPG"
     private static let THUMB_EXTENSION = ENCRYPT_IMAGE ? "_thumbnail.EJPG" : "_thumbnail.JPG"
     
@@ -39,6 +40,7 @@ class Utils {
         if deleteIfExist && FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDir) && !isDir.boolValue {
             try FileManager.default.removeItem(at: fileURL)
         }
+        print(fileURL)
         return fileURL
     }
     
@@ -67,7 +69,7 @@ class Utils {
     // Save data to file
     static func save(subFolder: String, fileName: String, data: Data, withThumb: Bool) throws -> Data {
         var result = data
-        let encryptedData = ENCRYPT_IMAGE ? KeyChainManager.instance.encrypt(data: data) : data
+        let encryptedData = ENCRYPT_IMAGE ? try KeyChainManager.instance.encrypt(keyTag: KEY_TAG, data: data) : data
         let imageName = "\(fileName)\(IMAGE_EXTENSION)"
         let imageURL = try getFileURL(subFolder: subFolder, fileName: imageName, deleteIfExist: true)
         try encryptedData.write(to: imageURL)
@@ -76,7 +78,7 @@ class Utils {
             if let thumbData = data.resizeImage(target: 512.0) {
                 let thumbName = "\(fileName)\(THUMB_EXTENSION)"
                 let thumbURL = try getFileURL(subFolder: subFolder, fileName: thumbName, deleteIfExist: true)
-                let encryptedThumbData = ENCRYPT_IMAGE ? KeyChainManager.instance.encrypt(data: thumbData) : thumbData
+                let encryptedThumbData = ENCRYPT_IMAGE ? try KeyChainManager.instance.encrypt(keyTag: KEY_TAG, data: thumbData) : thumbData
                 try encryptedThumbData.write(to: thumbURL)
                 result = thumbData
             }
@@ -88,14 +90,16 @@ class Utils {
     static func deleteCaches(_ subFolder: String) throws -> Void {
         let rootURL = try getRootFolder()
         try deleteDirector(folderURL: rootURL, deleteItSelf: false)
+        _ = KeyChainManager.instance.deleteKeys(keyTag: KEY_TAG)
     }
     
     // Get Cached File. Return String Base64
     static func getCachedFile(_ subFolder: String, _ bodyPart: Int, _ isThumb: Bool) throws -> String? {
         if let filePath = try getCachedFilePath(subFolder, bodyPart, isThumb) {
+            print(filePath)
             if let data = FileManager.default.contents(atPath: filePath) {
                 if ENCRYPT_IMAGE {
-                    let decryptedData = KeyChainManager.instance.decrypt(data: data)
+                    let decryptedData = try KeyChainManager.instance.decrypt(keyTag: KEY_TAG, data: data)
                     return decryptedData.base64EncodedString()
                 } else {
                     return data.base64EncodedString()
