@@ -289,6 +289,13 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
           if (afState == CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED && flashState == CaptureRequest.FLASH_STATE_FIRED) {
             takePicture();
             unlockFocus();
+            return;
+          }
+          if (afState != CaptureRequest.CONTROL_AF_STATE_FOCUSED_LOCKED) {
+            Toast.makeText(context, "Cannot focus", Toast.LENGTH_SHORT).show();
+          }
+          if (flashState != CaptureRequest.FLASH_STATE_FIRED) {
+            Toast.makeText(context, "Cannot fire flash", Toast.LENGTH_SHORT).show();
           }
           break;
         default:
