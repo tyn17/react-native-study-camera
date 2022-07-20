@@ -41,7 +41,7 @@ import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.reactnativestudycamera.consts.DetectionMode;
 import com.reactnativestudycamera.drawing.PoseCanvasView;
-import com.reactnativestudycamera.encrypt.EncryptUtils;
+import com.reactnativestudycamera.encrypt.KeystoreManager;
 import com.reactnativestudycamera.posedetection.FrameHandler;
 import com.reactnativestudycamera.posedetection.datamodels.PoseResult;
 import com.reactnativestudycamera.posedetection.intefaces.FrameHandlerListener;
@@ -51,7 +51,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableEntryException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 
@@ -305,9 +308,9 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
 
         //Return Image to React-Native
         WritableMap event = Arguments.createMap();
-        event.putString("imageBase64", EncryptUtils.toBase64(bytes));
+        event.putString("imageBase64", KeystoreManager.toBase64(bytes));
         sendEvent("capturedPhotoEvent", event);
-      } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeySpecException | BadPaddingException | InvalidKeyException e) {
+      } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeySpecException | BadPaddingException | InvalidKeyException | UnrecoverableEntryException | KeyStoreException | NoSuchProviderException e) {
         e.printStackTrace();
       }
     }

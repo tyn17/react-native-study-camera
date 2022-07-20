@@ -14,22 +14,22 @@ import android.util.Size;
 
 import androidx.annotation.RequiresApi;
 
-import com.reactnativestudycamera.encrypt.EncryptUtils;
-import com.reactnativestudycamera.encrypt.EncryptedModel;
+import com.reactnativestudycamera.encrypt.KeystoreManager;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableEntryException;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.BadPaddingException;
@@ -38,9 +38,9 @@ import javax.crypto.NoSuchPaddingException;
 
 public class Utils {
   private static final boolean ENCRYPT_IMAGE = true;
+  private static final String KEY_ALIAS = "belle-study-images-key";
   private static final String IMAGE_EXTENSION = ENCRYPT_IMAGE ? ".EJPG" : ".JPG";
   private static final String THUMB_EXTENSION = ENCRYPT_IMAGE ? "_thumbnail.EJPG" : "_thumbnail.JPG";
-  private static final String KEY_FILE_EXTENSION = ".enc";
 
   /**
    * Get Root Folder
@@ -71,14 +71,12 @@ public class Utils {
    * @throws IOException
    */
   @RequiresApi(api = Build.VERSION_CODES.O)
-  public static byte[] save(File file, byte[] bytes, boolean withThumb) throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, InvalidKeySpecException, BadPaddingException, InvalidKeyException {
+  public static byte[] save(File file, byte[] bytes, boolean withThumb) throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, InvalidKeySpecException, BadPaddingException, InvalidKeyException, UnrecoverableEntryException, KeyStoreException, NoSuchProviderException {
     byte[] result = bytes;
     try (OutputStream output = new FileOutputStream(file)) {
       if (ENCRYPT_IMAGE) {
-        EncryptedModel encrypted = EncryptUtils.encrypt(bytes);
-        output.write(encrypted.getEncryptedData());
-        //Write key
-        writeKeyFile(file.getAbsolutePath(), encrypted.getEncryptedKeyBase64());
+        byte[] encrypted = KeystoreManager.instance.encrypt(KEY_ALIAS, bytes);
+        output.write(encrypted);
       } else {
         output.write(bytes);
       }
@@ -97,10 +95,8 @@ public class Utils {
           try (OutputStream thumbOs = new FileOutputStream(thumbFile)) {
             result = thumbBytes.toByteArray();
             if (ENCRYPT_IMAGE) {
-              EncryptedModel encryptedThumb = EncryptUtils.encrypt(result);
-              thumbOs.write(encryptedThumb.getEncryptedData());
-              //Write key
-              writeKeyFile(thumbPath, encryptedThumb.getEncryptedKeyBase64());
+              byte[] encrypted = KeystoreManager.instance.encrypt(KEY_ALIAS, result);
+              thumbOs.write(encrypted);
             } else {
               thumbOs.write(result);
             }
@@ -161,13 +157,14 @@ public class Utils {
       try {
         byte[] bytes = Files.readAllBytes(file.toPath());
         if (ENCRYPT_IMAGE) {
-          String keyBase64 = readKeyFile(imagePath);
-          bytes = EncryptUtils.decrypt(bytes, keyBase64);
+          bytes = KeystoreManager.instance.decrypt(KEY_ALIAS, bytes);
         }
-        return EncryptUtils.toBase64(bytes);
-      } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeySpecException | BadPaddingException | InvalidKeyException e) {
+        return KeystoreManager.toBase64(bytes);
+      } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException e) {
         e.printStackTrace();
         return null;
+      } catch (UnrecoverableEntryException | KeyStoreException | NoSuchProviderException e) {
+        e.printStackTrace();
       }
     }
     return null;
@@ -180,11 +177,11 @@ public class Utils {
       File[] subFolders = dir.listFiles(File::isDirectory);
       if (subFolders != null && subFolders.length > 0) {
         for (File subFolder : subFolders) {
-          File[] files = null;
-          if (onlyCheckOrigin) {
+          File[] files;
+          if (!onlyCheckOrigin) {
             files = subFolder.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(IMAGE_EXTENSION)));
           } else {
-            files = subFolder.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(IMAGE_EXTENSION) || pathname.getName().endsWith(THUMB_EXTENSION)));
+            files = subFolder.listFiles(pathname -> pathname.isFile() && pathname.getName().endsWith(IMAGE_EXTENSION) && !pathname.getName().endsWith(THUMB_EXTENSION));
           }
           if (files != null && files.length > 0) {
             return true;
@@ -199,7 +196,7 @@ public class Utils {
     String dirPath = getFilesRootFolder(context) + File.separator + subFolder;
     File dir = new File(dirPath);
     if (dir.exists()) {
-      return dir.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(IMAGE_EXTENSION) || pathname.getName().endsWith(KEY_FILE_EXTENSION)));
+      return dir.listFiles(pathname -> pathname.isFile() && (pathname.getName().endsWith(IMAGE_EXTENSION)));
     }
     return null;
   }
@@ -220,32 +217,6 @@ public class Utils {
       }
       if (deleteItSelf) dir.delete();
     }
-  }
-
-  /**
-   * Write Key File
-   * @param imageFilePath
-   * @param key
-   * @throws IOException
-   */
-  private static void writeKeyFile(String imageFilePath, String key) throws IOException {
-    File keyFile = new File(imageFilePath + KEY_FILE_EXTENSION);
-    if (keyFile.exists() && keyFile.delete());
-    if (keyFile.createNewFile()) {
-      try (FileWriter writer = new FileWriter(keyFile)) {
-          writer.write(key);
-      }
-    }
-  }
-
-  @RequiresApi(api = Build.VERSION_CODES.O)
-  private static String readKeyFile(String imageFilePath) throws IOException {
-    File keyFile = new File(imageFilePath + KEY_FILE_EXTENSION);
-    if (keyFile.exists()) {
-      byte[] bytes = Files.readAllBytes(keyFile.toPath());
-      return new String(bytes, StandardCharsets.UTF_8);
-    }
-    return null;
   }
 
   /**

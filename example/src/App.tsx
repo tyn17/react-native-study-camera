@@ -32,6 +32,7 @@ export default function App() {
       var count = 0;
       CameraView.getCachedFile(subjectId, index, true)
         .then((base64: String) => {
+          console.log(base64);
           count++;
           bp.image = base64 ? `data:image/png;base64, ${base64}` : '';
           if (count === 4) {
@@ -55,7 +56,7 @@ export default function App() {
     reloadCaches();
   }, []);
 
-  const captureTop = (Dimensions.get('window').width * 4) / 3 - 50;
+  const captureTop = (Dimensions.get('window').width * 4) / 3 - 150;
   return (
     <View style={styles.container}>
       <CameraView
@@ -93,11 +94,21 @@ export default function App() {
                 }
                 onPress={() => setBodyPart(index)}
               >
-                {bp.image.length > 0 && (
-                  <Image width={50} height={50} source={{ uri: bp.image }} />
-                )}
-                {!bp.image && <Text>{bp.label}</Text>}
+                <Text>{bp.label}</Text>
               </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={styles.imageContainer}>
+          {bodyParts.map((bp, index) => {
+            return (
+              bp.image.length > 0 && (
+                <Image
+                  key={`img-${index}`}
+                  style={styles.imageStyle}
+                  source={{ uri: bp.image }}
+                />
+              )
             );
           })}
         </View>
@@ -142,6 +153,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     margin: 10,
+  },
+  imageContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+  },
+  imageStyle: {
+    width: 100,
+    height: 100,
   },
   button: {
     borderRadius: 20,
