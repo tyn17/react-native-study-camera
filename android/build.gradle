@@ -55,7 +55,7 @@ repositories {
 
 // Download tflite model
 // TyN: Remove-Move-Net
-// apply from:"download.gradle"
+apply from:"download.gradle"
 
 dependencies {
     //noinspection GradleDynamicVersion
