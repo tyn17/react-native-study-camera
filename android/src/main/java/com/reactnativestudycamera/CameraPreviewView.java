@@ -57,6 +57,8 @@ import java.security.NoSuchProviderException;
 import java.security.UnrecoverableEntryException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -360,6 +362,7 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
     }
   }
 
+  private Timer lockFocusTimer;
   /**
    * Lock Focus before get Image from Camera
    */
@@ -369,6 +372,19 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
       previewCRBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
       previewCRBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
       cameraCaptureSession.capture(previewCRBuilder.build(), cameraSessionCaptureCallback, backgroundHandler);
+
+      // Unlock Focus if it cannot unlock after 2 seconds
+      if (lockFocusTimer != null) lockFocusTimer.cancel();
+      lockFocusTimer = new Timer("Timer");
+      lockFocusTimer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          if (state == STATE_WAIT_LOCK) {
+            unlockFocus();
+          }
+        }
+      }, 2000);
+
     } catch (CameraAccessException e) {
       e.printStackTrace();
     }
@@ -379,6 +395,10 @@ public class CameraPreviewView extends LinearLayout implements TextureView.Surfa
    */
   private void unlockFocus() {
     try {
+      if (lockFocusTimer != null) {
+        lockFocusTimer.cancel();
+        lockFocusTimer = null;
+      }
       state = STATE_PREVIEW;
       previewCRBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
       previewCRBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
