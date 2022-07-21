@@ -3,6 +3,7 @@ package com.reactnativestudycamera.encrypt;
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
@@ -19,6 +20,7 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.logging.Logger;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -95,6 +97,23 @@ public class KeystoreManager {
     return secretKeyEntry.getSecretKey();
   }
 
+  /**
+   * Delete Keys
+   * @param keyAlias
+   * @return
+   * @throws KeyStoreException
+   */
+  public boolean deleteKeys(String keyAlias) {
+    try {
+      if (keyStore.containsAlias(keyAlias)) {
+        keyStore.deleteEntry(keyAlias);
+      }
+      return true;
+    } catch (KeyStoreException kse) {
+      Log.e("DELETE KEYS", kse.getMessage(), kse);
+      return false;
+    }
+  }
   /**
    * Convert Bytes to Base64 String
    * @param bytes

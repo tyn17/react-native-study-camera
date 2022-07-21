@@ -137,6 +137,8 @@ public class Utils {
     String rootPath = getFilesRootFolder(context);
     File dir = new File(rootPath);
     deleteDirectory(dir, false);
+    //Delete keys
+    KeystoreManager.instance.deleteKeys(KEY_ALIAS);
   }
 
   @RequiresApi(api = Build.VERSION_CODES.O)
