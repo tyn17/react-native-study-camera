@@ -10,9 +10,13 @@
 class StudyCameraModule: NSObject {
     
     @objc(deleteCaches:)
-    func deleteCaches(_ subFolder: String) -> Void {
+    func deleteCaches(_ subFolder: String?) -> Void {
         do {
-            try Utils.deleteCaches(subFolder)
+            if let folder = subFolder {
+                try Utils.deleteCaches(folder)
+            } else {
+                try Utils.deleteAllCaches()
+            }
         } catch let err {
             print(err)
         }

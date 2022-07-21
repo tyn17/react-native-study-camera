@@ -86,8 +86,17 @@ class Utils {
         return result
     }
     
-    // Delete Caches
+    // Delete Caches in Folder
     static func deleteCaches(_ subFolder: String) throws -> Void {
+        let folderURL = try getRootFolder().appendingPathComponent(subFolder, isDirectory: true)
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: folderURL.path, isDirectory: &isDir) && isDir.boolValue {
+            try deleteDirector(folderURL: folderURL, deleteItSelf: false)
+        }
+    }
+    
+    // Delete All Caches
+    static func deleteAllCaches() throws -> Void {
         let rootURL = try getRootFolder()
         try deleteDirector(folderURL: rootURL, deleteItSelf: false)
         _ = KeyChainManager.instance.deleteKeys(keyTag: KEY_TAG)

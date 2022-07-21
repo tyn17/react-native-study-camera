@@ -9,7 +9,7 @@
 #import <React/RCTBridgeModule.h>
 
 @interface RCT_EXTERN_MODULE(StudyCameraModule, NSObject)
-RCT_EXTERN_METHOD(deleteCaches:(NSString)subFolder)
+RCT_EXTERN_METHOD(deleteCaches:(NSString*)subFolder)
 
 RCT_EXTERN_METHOD(getCachedFile:(NSString*)subFolder bodyPart:(NSInteger)bodyPart isThumb:(BOOL)isThumb resolver:(RCTPromiseResolveBlock)resolver rejecter:(RCTPromiseRejectBlock)rejecter)
 
