@@ -1,6 +1,6 @@
 {
   "name": "react-native-study-camera",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "description": "The package to open Camera for Belle Study application",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
